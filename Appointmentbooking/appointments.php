@@ -22,6 +22,7 @@ $result = $conn->query($sql);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Appointments - Appointment Booking</title>
     <link rel="stylesheet" type="text/css" href="style.css?v=<?php echo time(); ?>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body class="dashboard-bg">
@@ -50,10 +51,17 @@ $result = $conn->query($sql);
 
     <div class="container mt-4">
         <div class="card glass full-width">
-            <h2>My Appointments</h2>
+            <div class="flex-align" style="justify-content: space-between; align-items: center;">
+                <h2>My Appointments</h2>
+                <?php if ($result->num_rows > 0): ?>
+                    <button onclick="downloadPDF()" class="btn secondary-btn btn-sm">📥 Download PDF</button>
+                <?php endif; ?>
+            </div>
 
             <?php if ($result->num_rows > 0): ?>
-                <div class="table-responsive mt-4">
+                <div id="appointmentData" class="table-responsive mt-4"
+                    style="background: white; padding: 20px; border-radius: 8px;">
+                    <h3 style="display: none;" class="pdf-header">CarePlus - Appointment History</h3>
                     <table class="styled-table">
                         <thead>
                             <tr>
@@ -101,7 +109,32 @@ $result = $conn->query($sql);
             <?php endif; ?>
         </div>
     </div>
+    <script>
+        function downloadPDF() {
+            // 1. Get the HTML element you want to convert
+            const element = document.getElementById('appointmentData');
 
+            // 2. Temporarily show the hidden header for the PDF
+            const header = element.querySelector('.pdf-header');
+            header.style.display = 'block';
+            header.style.marginBottom = '20px';
+
+            // 3. Configure the PDF settings
+            const opt = {
+                margin: 10,
+                filename: 'CarePlus_Appointments_<?php echo htmlspecialchars($_SESSION['user_name']); ?>.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 }, // Higher scale for better resolution
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } // Landscape fits tables better
+            };
+
+            // 4. Generate the PDF
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Hide the header again after downloading
+                header.style.display = 'none';
+            });
+        }
+    </script>
 </body>
 
 </html>
