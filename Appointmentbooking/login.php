@@ -12,11 +12,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $conn->real_escape_string($_POST['email']);
     $password = $_POST['password'];
 
-    if(empty($email) || empty($password)) {
+   if(empty($email) || empty($password)) {
         $error = "Both fields are required!";
     } else {
-        $sql = "SELECT id, name, password FROM users WHERE email='$email'";
-        $result = $conn->query($sql);
+        
+        $stmt = $conn->prepare("SELECT id, name, password FROM users WHERE email = ?");
+        
+        $stmt->bind_param("s", $email);
+        
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
 
         if($result->num_rows == 1) {
             $row = $result->fetch_assoc();
@@ -50,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <form action="login.php" method="POST">
             <div class="form-group">
                 <label>Email:</label>
-                <input type="email" name="email" placeholder="Email Address" required>
+                <input type="email" name="email" placeholder="Email Address" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required>
             </div>
             
             <div class="form-group">

@@ -10,14 +10,18 @@ $error = '';
 $success = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name = $conn->real_escape_string($_POST['name']);
+    $name = ucwords(strtolower($conn->real_escape_string($_POST['name'])));
     $email = $conn->real_escape_string($_POST['email']);
     $phone = $conn->real_escape_string($_POST['phone']);
     $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
 
-    if(empty($name) || empty($email) || empty($password) || empty($phone)) {
+    if(empty($name) || empty($email) || empty($password) || empty($phone) || empty($confirm_password)) {
         $error = "All fields are required!";
+    } else if ($password !== $confirm_password) {
+        $error = "Password does not match!";
     } else {
+    
         // Check if email already exists
         $check = $conn->query("SELECT * FROM users WHERE email='$email'");
         if($check->num_rows > 0) {
@@ -26,7 +30,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $sql = "INSERT INTO users (name, email, password, phone) VALUES ('$name', '$email', '$hashed_password', '$phone')";
             if($conn->query($sql) === TRUE) {
-                $success = "Registration successful! You can now <a href='login.php'>Sign In</a>.";
+                // Redirect to login page with a success flag in the URL
+                header("Location: login.php?signup=success");
+                exit(); // Always include exit() after a header redirect
             } else {
                 $error = "Error: " . $conn->error;
             }
@@ -62,12 +68,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             <div class="form-group">
                 <label>Phone Number:</label>
-                <input type="tel" name="phone" placeholder="Phone Number" required>
+                <input type="tel" name="phone" placeholder="Phone Number" pattern="[0-9]{10}" title="Please enter a valid 10-Digit Phone Number" required>
             </div>
             
             <div class="form-group">
                 <label>Password:</label>
-                <input type="password" name="password" placeholder="Password" required>
+                <input type="password" name="password" placeholder="Password" minlength="6" required>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password: </label>
+                <input type="password" name="confirm_password" placeholder="Confirm Password" minLength="6" required>
             </div>
 
             <button type="submit" class="btn primary-btn">Sign Up</button>

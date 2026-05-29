@@ -4,6 +4,15 @@ if(!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
+date_default_timezone_set('Asia/Kolkata'); // Set to local time
+$hour = date('H');
+if ($hour < 12) {
+    $greeting = 'Good morning';
+} elseif ($hour < 17) {
+    $greeting = 'Good afternoon';
+} else {
+    $greeting = 'Good evening';
+}
 require 'db_connect.php';
 $user_id = $_SESSION['user_id'];
 $count_query = $conn->query("SELECT COUNT(*) as total FROM bookings WHERE user_id='$user_id'");
@@ -42,7 +51,7 @@ $total_appointments = $count_result['total'];
                 <?php echo strtoupper(substr($_SESSION['user_name'], 0, 1)); ?>
             </div>
             <div>
-                <h2 style="margin-bottom:0;">Welcome back, <?php echo htmlspecialchars($_SESSION['user_name']); ?>!</h2>
+                <h2 style="margin-bottom:0;"><?php echo $greeting; ?>, <?php echo htmlspecialchars($_SESSION['user_name']); ?>!</h2>
                 <p class="text-muted">Here is an overview of your health schedule.</p>
             </div>
         </div>
