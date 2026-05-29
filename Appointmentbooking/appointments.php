@@ -54,7 +54,7 @@ $result = $conn->query($sql);
             <div class="flex-align" style="justify-content: space-between; align-items: center;">
                 <h2>My Appointments</h2>
                 <?php if ($result->num_rows > 0): ?>
-                    <button onclick="downloadPDF()" class="btn secondary-btn btn-sm">📥 Download PDF</button>
+                    <button onclick="downloadPDF()" class="btn secondary-btn btn-sm">📥 Export</button>
                 <?php endif; ?>
             </div>
 
@@ -72,6 +72,7 @@ $result = $conn->query($sql);
                                 <th>Doctor</th>
                                 <th>Details</th>
                                 <th>Status</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -87,6 +88,103 @@ $result = $conn->query($sql);
                                             class="text-muted small">(<?php echo htmlspecialchars($row['doctor_specialty'] ? $row['doctor_specialty'] : 'N/A'); ?>)</span>
                                     </td>
                                     <td><?php echo htmlspecialchars($row['details'] ? $row['details'] : 'N/A'); ?></td>
+                                    <td>
+                                        <?php
+                                        $today = date('Y-m-d');
+                                        if ($row['date'] < $today) {
+                                            echo '<span class="badge" style="background-color: #e5e7eb; color: #4b5563;">Completed</span>';
+                                        } else {
+                                            echo '<span class="badge success-badge">Upcoming</span>';
+                                        }
+                                        ?>
+                                    </td>
+
+                                    <td class="action-cell">
+                                        <button class="kebab-btn"
+                                            onclick="toggleDropdown('drop-<?php echo $row['id']; ?>')">⋮</button>
+                                        <div id="drop-<?php echo $row['id']; ?>" class="dropdown-content">
+                                            <a href="#"
+                                                onclick="exportSingleTicket('<?php echo htmlspecialchars($row['booking_id']); ?>', '<?php echo htmlspecialchars($row['patient_name']); ?>', '<?php echo htmlspecialchars($row['doctor_name']); ?>', '<?php echo date('F j, Y', strtotime($row['date'])); ?>', '<?php echo date('h:i A', strtotime($row['time'])); ?>')">📄
+                                                Download Ticket</a>
+
+                                            <?php if ($row['date'] >= $today): ?>
+                                                <a href="#"
+                                                    onclick="alert('In the next phase, we will build edit_appointment.php?id=<?php echo $row['id']; ?>')">✏️
+                                                    Edit Details</a>
+                                                <a href="#" onclick="confirmCancellation(<?php echo $row['id']; ?>)"
+                                                    class="text-danger">🚫 Cancel Booking</a>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                    ```
+
+                                    ### Step 3: Add the JavaScript Logic
+                                    Scroll down to the bottom of **`appointments.php`**, right under your existing
+                                    `downloadPDF()` script, and add this new code. It handles opening/closing the menus,
+                                    creating the single PDF ticket, and triggering the professional warning for cancellations.
+
+                                    ```html
+                                    <script>
+                                        // 1. Toggle the 3-dots dropdown
+                                        function toggleDropdown(id) {
+                                            // Close any other open dropdowns first
+                                            document.querySelectorAll('.dropdown-content').forEach(el => {
+                                                if (el.id !== id) el.classList.remove('show-dropdown');
+                                            });
+                                            // Toggle the clicked one
+                                            document.getElementById(id).classList.toggle('show-dropdown');
+                                        }
+
+                                        // Close dropdowns if the user clicks anywhere else on the screen
+                                        window.onclick = function (event) {
+                                            if (!event.target.matches('.kebab-btn')) {
+                                                document.querySelectorAll('.dropdown-content').forEach(el => {
+                                                    el.classList.remove('show-dropdown');
+                                                });
+                                            }
+                                        }
+
+                                        // 2. Professional Cancellation Warning
+                                        function confirmCancellation(bookingId) {
+                                            const warningMessage = "Are you sure you want to cancel this appointment?\n\nPlease note: This action is permanent and cannot be undone. If you need a new time slot later, you will have to create a new booking.";
+
+                                            if (confirm(warningMessage)) {
+                                                // If they click "OK", send them to the cancel script
+                                                window.location.href = "cancel_appointment.php?id=" + bookingId;
+                                            }
+                                        }
+
+                                        // 3. Export Single Appointment Ticket
+                                        function exportSingleTicket(bookingId, patient, doctor, date, time) {
+                                            // Create a temporary hidden div formatted like a medical ticket
+                                            const tempDiv = document.createElement('div');
+                                            tempDiv.style.padding = '40px';
+                                            tempDiv.style.fontFamily = 'Inter, sans-serif';
+                                            tempDiv.innerHTML = `
+            <h2 style="color: #4f46e5; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">CarePlus Appointment Ticket</h2>
+            <div style="margin-top: 20px; line-height: 2;">
+                <p><strong>Booking ID:</strong> ${bookingId}</p>
+                <p><strong>Patient Name:</strong> ${patient}</p>
+                <p><strong>Doctor:</strong> Dr. ${doctor}</p>
+                <p><strong>Date:</strong> ${date}</p>
+                <p><strong>Time:</strong> ${time}</p>
+                <p><strong>Status:</strong> Confirmed</p>
+            </div>
+            <p style="margin-top: 40px; font-size: 0.8rem; color: #6b7280;">Please arrive 10 minutes prior to your scheduled time.</p>
+        `;
+
+                                            const opt = {
+                                                margin: 10,
+                                                filename: `CarePlus_Ticket_${bookingId}.pdf`,
+                                                image: { type: 'jpeg', quality: 0.98 },
+                                                html2canvas: { scale: 2 },
+                                                jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' } // A5 size is perfect for single tickets!
+                                            };
+
+                                            // Generate the PDF from the temporary div
+                                            html2pdf().set(opt).from(tempDiv).save();
+                                        }
+                                    </script>
                                     <td> <?php
                                     $today = date('Y-m-d');
                                     if ($row['date'] < $today) {
