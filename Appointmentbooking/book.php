@@ -14,18 +14,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $time = $conn->real_escape_string($_POST['time']);
     $patient_name = $conn->real_escape_string($_POST['patient_name']);
     $details = $conn->real_escape_string($_POST['details']);
+    $doctor_id = isset($_POST['doctor_id']) ? (int)$_POST['doctor_id'] : 0;
     $user_id = $_SESSION['user_id'];
 
-    if(empty($date) || empty($time) || empty($patient_name)) {
-        $error = "Name, date, and time are required!";
+    if(empty($date) || empty($time) || empty($patient_name) || empty($doctor_id)) {
+        $error = "Name, date, time, and doctor selection are required!";
     } else {
-        // Check if slot already booked
-        $check = $conn->query("SELECT * FROM bookings WHERE date='$date' AND time='$time'");
+        // Check if slot already booked for this specific doctor
+        $check = $conn->query("SELECT * FROM bookings WHERE date='$date' AND time='$time' AND doctor_id='$doctor_id'");
         if ($check->num_rows > 0) {
-            $error = "This time slot is already booked! Please select another time.";
+            $error = "This time slot is already booked for the selected doctor! Please choose another time or doctor.";
         } else {
             $booking_id = 'CP-' . strtoupper(substr(uniqid(), -6));
-            $sql = "INSERT INTO bookings (user_id, booking_id, patient_name, date, time, details) VALUES ('$user_id', '$booking_id', '$patient_name', '$date', '$time', '$details')";
+            $sql = "INSERT INTO bookings (user_id, doctor_id, booking_id, patient_name, date, time, details) VALUES ('$user_id', '$doctor_id', '$booking_id', '$patient_name', '$date', '$time', '$details')";
             if ($conn->query($sql) === TRUE) {
                 $success = "Appointment Booked Successfully! Your Booking ID is <strong>$booking_id</strong>. View your <a href='appointments.php'>appointments here</a>.";
             } else {
@@ -55,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <a href="dashboard.php">Dashboard</a>
                 <a href="appointments.php">My Appointments</a>
                 <a href="profile.php">Profile</a>
-                <a href="logout.php" class="btn-sm btn-danger">Logout</a>
+                <a href="logout.php" class="btn-logout">Logout</a>
             </div>
         </div>
     </nav>
@@ -72,6 +73,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="form-group">
                     <label>Patient Name:</label>
                     <input type="text" name="patient_name" value="<?php echo htmlspecialchars($_SESSION['user_name']); ?>" required>
+                </div>
+
+                <?php
+                // Fetch all doctors and build specialty list
+                $doctors_data = [];
+                $specialties = [];
+                $doctors_res = $conn->query("SELECT id, name, specialty FROM doctors ORDER BY name ASC");
+                if ($doctors_res) {
+                    while($doc = $doctors_res->fetch_assoc()) {
+                        $doctors_data[] = $doc;
+                        if (!in_array($doc['specialty'], $specialties)) {
+                            $specialties[] = $doc['specialty'];
+                        }
+                    }
+                }
+                sort($specialties);
+                ?>
+
+                <div class="form-group">
+                    <label>Select Specialty (Profession):</label>
+                    <select name="specialty" id="specialty" required>
+                        <option value="">-- Select Specialty --</option>
+                        <?php
+                        foreach($specialties as $spec) {
+                            echo "<option value='" . htmlspecialchars($spec) . "'>" . htmlspecialchars($spec) . "</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Doctor:</label>
+                    <select name="doctor_id" id="doctor_id" required disabled>
+                        <option value="">-- Select Doctor --</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -104,5 +140,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const doctors = <?php echo json_encode($doctors_data); ?>;
+            const specialtySelect = document.getElementById('specialty');
+            const doctorSelect = document.getElementById('doctor_id');
+
+            specialtySelect.addEventListener('change', function() {
+                const selectedSpecialty = this.value;
+                
+                // Clear existing options except the first one
+                doctorSelect.innerHTML = '<option value="">-- Select Doctor --</option>';
+                
+                if (selectedSpecialty) {
+                    // Filter doctors by specialty
+                    const filteredDoctors = doctors.filter(doc => doc.specialty === selectedSpecialty);
+                    
+                    // Populate options
+                    filteredDoctors.forEach(doc => {
+                        const opt = document.createElement('option');
+                        opt.value = doc.id;
+                        opt.textContent = 'Dr. ' + doc.name;
+                        doctorSelect.appendChild(opt);
+                    });
+                    
+                    doctorSelect.disabled = false;
+                } else {
+                    doctorSelect.disabled = true;
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -14,6 +14,13 @@
     --glass-bg: rgba(255, 255, 255, 0.85);
     --glass-border: rgba(255, 255, 255, 0.3);
     --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    
+    /* Logout Button Theme Colors */
+    --logout-bg: rgba(239, 68, 68, 0.08);
+    --logout-text: #e11d48;
+    --logout-border: rgba(225, 29, 72, 0.2);
+    --logout-hover-bg: #e11d48;
+    --logout-hover-text: #ffffff;
 }
 
 * {
@@ -191,6 +198,35 @@ textarea {
 .btn-danger { background-color: var(--danger); color: white; }
 .btn-danger:hover { background-color: var(--danger-hover); color: white; }
 
+.btn-logout {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--logout-bg);
+    color: var(--logout-text) !important;
+    border: 1px solid var(--logout-border);
+}
+
+.btn-logout:hover {
+    background-color: var(--logout-hover-bg);
+    color: var(--logout-hover-text) !important;
+    border-color: var(--logout-hover-bg);
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
+    text-decoration: none;
+}
+
+.btn-logout:active {
+    transform: translateY(0);
+}
+
 .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
 
 /* Alerts */
@@ -234,7 +270,7 @@ textarea {
 }
 
 .nav-links a {
-    color: #4b5563;
+    color: #090909;
     text-decoration: none;
 }
 

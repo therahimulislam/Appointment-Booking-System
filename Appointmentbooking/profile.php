@@ -78,7 +78,7 @@ $user = $result->fetch_assoc();
                 <a href="dashboard.php">Dashboard</a>
                 <a href="appointments.php">My Appointments</a>
                 <a href="profile.php" class="active">Profile</a>
-                <a href="logout.php" class="btn-sm btn-danger">Logout</a>
+                <a href="logout.php" class="btn-logout">Logout</a>
             </div>
         </div>
     </nav>

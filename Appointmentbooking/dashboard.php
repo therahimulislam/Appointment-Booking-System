@@ -30,7 +30,7 @@ $total_appointments = $count_result['total'];
                 <a href="dashboard.php" class="active">Dashboard</a>
                 <a href="appointments.php">My Appointments</a>
                 <a href="profile.php">Profile</a>
-                <a href="logout.php" class="btn-sm btn-danger">Logout</a>
+                <a href="logout.php" class="btn-logout">Logout</a>
             </div>
         </div>
     </nav>

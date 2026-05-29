@@ -7,7 +7,11 @@ if(!isset($_SESSION['user_id'])) {
 require 'db_connect.php';
 
 $user_id = $_SESSION['user_id'];
-$sql = "SELECT * FROM bookings WHERE user_id='$user_id' ORDER BY date ASC, time ASC";
+$sql = "SELECT b.*, d.name AS doctor_name, d.specialty AS doctor_specialty 
+        FROM bookings b 
+        LEFT JOIN doctors d ON b.doctor_id = d.id 
+        WHERE b.user_id='$user_id' 
+        ORDER BY b.date ASC, b.time ASC";
 $result = $conn->query($sql);
 ?>
 <!DOCTYPE html>
@@ -30,11 +34,11 @@ $result = $conn->query($sql);
                 <a href="dashboard.php">Dashboard</a>
                 <a href="appointments.php" class="active">My Appointments</a>
                 <a href="profile.php">Profile</a>
-                <a href="logout.php" class="btn-sm btn-danger">Logout</a>
+                <a href="logout.php" class="btn-logout">Logout</a>
             </div>
         </div>
     </nav>
-// This is container card glass
+
     <div class="container mt-4">
         <div class="card glass full-width">
             <h2>My Appointments</h2>
@@ -48,6 +52,7 @@ $result = $conn->query($sql);
                                 <th>Date</th>
                                 <th>Time</th>
                                 <th>Patient Name</th>
+                                <th>Doctor</th>
                                 <th>Details</th>
                                 <th>Status</th>
                             </tr>
@@ -59,6 +64,7 @@ $result = $conn->query($sql);
                                     <td><?php echo date('F j, Y', strtotime($row['date'])); ?></td>
                                     <td><?php echo date('h:i A', strtotime($row['time'])); ?></td>
                                     <td><?php echo htmlspecialchars($row['patient_name']); ?></td>
+                                    <td>Dr. <?php echo htmlspecialchars($row['doctor_name'] ? $row['doctor_name'] : 'Unassigned'); ?> <span class="text-muted small">(<?php echo htmlspecialchars($row['doctor_specialty'] ? $row['doctor_specialty'] : 'N/A'); ?>)</span></td>
                                     <td><?php echo htmlspecialchars($row['details'] ? $row['details'] : 'N/A'); ?></td>
                                     <td><span class="badge success-badge">Confirmed</span></td>
                                 </tr>
