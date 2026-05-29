@@ -62,7 +62,7 @@ body {
 }
 
 .container {
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
 }
@@ -378,22 +378,29 @@ textarea {
 }
 
 /* Tables */
+/* 1. The Container */
 .table-responsive {
-    overflow-x: auto;
+    width: 100%;
+    overflow: visible !important;
+    /* Lets the dropdown escape on desktop */
 }
 
+/* 2. The Base Table (No hidden overflow!) */
 .styled-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    /* Crucial: Allows us to round the inner cells */
+    border-spacing: 0;
     margin: 25px 0;
     font-size: 0.95em;
     font-family: 'Inter', sans-serif;
-    min-width: 400px;
+    min-width: 900px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
     border-radius: 8px;
-    overflow: hidden;
+    background-color: white;
 }
 
+/* 3. The Headers & Perfect Rounded Corners */
 .styled-table thead tr {
     background-color: var(--primary);
     color: #ffffff;
@@ -405,16 +412,44 @@ textarea {
     padding: 15px 20px;
 }
 
-.styled-table tbody tr {
+/* Curve the top-left and top-right cells directly */
+.styled-table thead tr th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.styled-table thead tr th:last-child {
+    border-top-right-radius: 8px;
+}
+
+/* Curve the bottom cells directly */
+.styled-table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 8px;
+}
+
+.styled-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 8px;
+}
+
+/* 4. The Rows and Borders */
+.styled-table tbody td {
     border-bottom: 1px solid #dddddd;
 }
 
-.styled-table tbody tr:nth-of-type(even) {
+.styled-table tbody tr:nth-of-type(even) td {
     background-color: #f9fafb;
 }
 
-.styled-table tbody tr:last-of-type {
+.styled-table tbody tr:last-of-type td {
     border-bottom: 2px solid var(--primary);
+}
+
+/* 5. The Mobile/Half-Screen Scroll Fix */
+@media (max-width: 950px) {
+    .table-responsive {
+        overflow-x: auto !important;
+        padding-bottom: 160px;
+        /* Gives the dropdown a safe space to open inside the scroll area */
+    }
 }
 
 .badge {

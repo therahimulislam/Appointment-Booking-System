@@ -59,8 +59,7 @@ $result = $conn->query($sql);
             </div>
 
             <?php if ($result->num_rows > 0): ?>
-                <div id="appointmentData" class="table-responsive mt-4"
-                    style="background: white; padding: 20px; border-radius: 8px;">
+                <div id="appointmentData" class="table-responsive"> 
                     <h3 style="display: none;" class="pdf-header">CarePlus - Appointment History</h3>
                     <table class="styled-table">
                         <thead>
@@ -88,6 +87,7 @@ $result = $conn->query($sql);
                                             class="text-muted small">(<?php echo htmlspecialchars($row['doctor_specialty'] ? $row['doctor_specialty'] : 'N/A'); ?>)</span>
                                     </td>
                                     <td><?php echo htmlspecialchars($row['details'] ? $row['details'] : 'N/A'); ?></td>
+
                                     <td>
                                         <?php
                                         $today = date('Y-m-d');
@@ -108,91 +108,11 @@ $result = $conn->query($sql);
                                                 Download Ticket</a>
 
                                             <?php if ($row['date'] >= $today): ?>
-                                                <a href="#"
-                                                    onclick="alert('In the next phase, we will build edit_appointment.php?id=<?php echo $row['id']; ?>')">✏️
-                                                    Edit Details</a>
+                                                <a href="edit_appointment.php?id=<?php echo $row['id']; ?>">✏️ Edit Details</a>
                                                 <a href="#" onclick="confirmCancellation(<?php echo $row['id']; ?>)"
                                                     class="text-danger">🚫 Cancel Booking</a>
                                             <?php endif; ?>
                                         </div>
-                                    </td>
-                                    ```
-
-                                    ### Step 3: Add the JavaScript Logic
-                                    Scroll down to the bottom of **`appointments.php`**, right under your existing
-                                    `downloadPDF()` script, and add this new code. It handles opening/closing the menus,
-                                    creating the single PDF ticket, and triggering the professional warning for cancellations.
-
-                                    ```html
-                                    <script>
-                                        // 1. Toggle the 3-dots dropdown
-                                        function toggleDropdown(id) {
-                                            // Close any other open dropdowns first
-                                            document.querySelectorAll('.dropdown-content').forEach(el => {
-                                                if (el.id !== id) el.classList.remove('show-dropdown');
-                                            });
-                                            // Toggle the clicked one
-                                            document.getElementById(id).classList.toggle('show-dropdown');
-                                        }
-
-                                        // Close dropdowns if the user clicks anywhere else on the screen
-                                        window.onclick = function (event) {
-                                            if (!event.target.matches('.kebab-btn')) {
-                                                document.querySelectorAll('.dropdown-content').forEach(el => {
-                                                    el.classList.remove('show-dropdown');
-                                                });
-                                            }
-                                        }
-
-                                        // 2. Professional Cancellation Warning
-                                        function confirmCancellation(bookingId) {
-                                            const warningMessage = "Are you sure you want to cancel this appointment?\n\nPlease note: This action is permanent and cannot be undone. If you need a new time slot later, you will have to create a new booking.";
-
-                                            if (confirm(warningMessage)) {
-                                                // If they click "OK", send them to the cancel script
-                                                window.location.href = "cancel_appointment.php?id=" + bookingId;
-                                            }
-                                        }
-
-                                        // 3. Export Single Appointment Ticket
-                                        function exportSingleTicket(bookingId, patient, doctor, date, time) {
-                                            // Create a temporary hidden div formatted like a medical ticket
-                                            const tempDiv = document.createElement('div');
-                                            tempDiv.style.padding = '40px';
-                                            tempDiv.style.fontFamily = 'Inter, sans-serif';
-                                            tempDiv.innerHTML = `
-            <h2 style="color: #4f46e5; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">CarePlus Appointment Ticket</h2>
-            <div style="margin-top: 20px; line-height: 2;">
-                <p><strong>Booking ID:</strong> ${bookingId}</p>
-                <p><strong>Patient Name:</strong> ${patient}</p>
-                <p><strong>Doctor:</strong> Dr. ${doctor}</p>
-                <p><strong>Date:</strong> ${date}</p>
-                <p><strong>Time:</strong> ${time}</p>
-                <p><strong>Status:</strong> Confirmed</p>
-            </div>
-            <p style="margin-top: 40px; font-size: 0.8rem; color: #6b7280;">Please arrive 10 minutes prior to your scheduled time.</p>
-        `;
-
-                                            const opt = {
-                                                margin: 10,
-                                                filename: `CarePlus_Ticket_${bookingId}.pdf`,
-                                                image: { type: 'jpeg', quality: 0.98 },
-                                                html2canvas: { scale: 2 },
-                                                jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' } // A5 size is perfect for single tickets!
-                                            };
-
-                                            // Generate the PDF from the temporary div
-                                            html2pdf().set(opt).from(tempDiv).save();
-                                        }
-                                    </script>
-                                    <td> <?php
-                                    $today = date('Y-m-d');
-                                    if ($row['date'] < $today) {
-                                        echo '<span class="badge" style="background-color: #e5e7eb; color: #4b5563;">Completed</span>';
-                                    } else {
-                                        echo '<span class="badge success-badge">Upcoming</span>';
-                                    }
-                                    ?>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
@@ -208,29 +128,95 @@ $result = $conn->query($sql);
         </div>
     </div>
     <script>
+        // ==========================================
+        // 1. EXPORT ENTIRE TABLE (The fixed function!)
+        // ==========================================
         function downloadPDF() {
-            // 1. Get the HTML element you want to convert
             const element = document.getElementById('appointmentData');
 
-            // 2. Temporarily show the hidden header for the PDF
-            const header = element.querySelector('.pdf-header');
-            header.style.display = 'block';
-            header.style.marginBottom = '20px';
+            // Safety check in case the ID was accidentally deleted
+            if (!element) {
+                alert("Error: Table ID missing. Please check step 2!");
+                return;
+            }
 
-            // 3. Configure the PDF settings
+            const header = element.querySelector('.pdf-header');
+            if (header) {
+                header.style.display = 'block';
+                header.style.marginBottom = '20px';
+            }
+
             const opt = {
                 margin: 10,
-                filename: 'CarePlus_Appointments_<?php echo htmlspecialchars($_SESSION['user_name']); ?>.pdf',
+                filename: 'CarePlus_Appointments_History.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 }, // Higher scale for better resolution
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } // Landscape fits tables better
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
             };
 
-            // 4. Generate the PDF
             html2pdf().set(opt).from(element).save().then(() => {
-                // Hide the header again after downloading
-                header.style.display = 'none';
+                if (header) header.style.display = 'none';
             });
+        }
+
+        // ==========================================
+        // 2. TOGGLE 3-DOTS DROPDOWN
+        // ==========================================
+        function toggleDropdown(id) {
+            document.querySelectorAll('.dropdown-content').forEach(el => {
+                if (el.id !== id) el.classList.remove('show-dropdown');
+            });
+            document.getElementById(id).classList.toggle('show-dropdown');
+        }
+
+        // Close dropdowns if clicking elsewhere
+        window.onclick = function (event) {
+            if (!event.target.matches('.kebab-btn')) {
+                document.querySelectorAll('.dropdown-content').forEach(el => {
+                    el.classList.remove('show-dropdown');
+                });
+            }
+        }
+
+        // ==========================================
+        // 3. CANCEL BOOKING WARNING
+        // ==========================================
+        function confirmCancellation(bookingId) {
+            const warningMessage = "Are you sure you want to cancel this appointment?\n\nPlease note: This action is permanent and cannot be undone. If you need a new time slot later, you will have to create a new booking.";
+            if (confirm(warningMessage)) {
+                window.location.href = "cancel_appointment.php?id=" + bookingId;
+            }
+        }
+
+        // ==========================================
+        // 4. EXPORT SINGLE TICKET
+        // ==========================================
+        function exportSingleTicket(bookingId, patient, doctor, date, time) {
+            const tempDiv = document.createElement('div');
+            tempDiv.style.padding = '40px';
+            tempDiv.style.fontFamily = 'Inter, sans-serif';
+            tempDiv.innerHTML = `
+                <h2 style="color: #4f46e5; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">CarePlus Appointment Ticket</h2>
+                <div style="margin-top: 20px; line-height: 2;">
+                    <p><strong>Booking ID:</strong> ${bookingId}</p>
+                    <p><strong>Patient Name:</strong> ${patient}</p>
+                    <p><strong>Doctor:</strong> Dr. ${doctor}</p>
+                    <p><strong>Date:</strong> ${date}</p>
+                    <p><strong>Time:</strong> ${time}</p>
+                    <p><strong>Status:</strong> Confirmed</p>
+                </div>
+                <p style="margin-top: 40px; font-size: 0.8rem; color: #6b7280;">Please arrive 10 minutes prior to your scheduled time.</p>
+            `;
+
+            const opt = {
+                margin: 10,
+                filename: `CarePlus_Ticket_${bookingId}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(tempDiv).save();
         }
     </script>
 </body>
