@@ -59,7 +59,7 @@ $result = $conn->query($sql);
             </div>
 
             <?php if ($result->num_rows > 0): ?>
-                <div id="appointmentData" class="table-responsive"> 
+                <div id="appointmentData" class="table-responsive">
                     <h3 style="display: none;" class="pdf-header">CarePlus - Appointment History</h3>
                     <table class="styled-table">
                         <thead>
@@ -127,25 +127,36 @@ $result = $conn->query($sql);
             <?php endif; ?>
         </div>
     </div>
+    <div id="cancelModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>⚠️ Cancel Appointment</h3>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel this appointment?
+                    This cannot be undone.
+                </p>
+                <p class="text-sm text-muted mt-2" style="font-size: 0.85rem; color: #6b7280;">This action is permanent
+                    and cannot be undone. If you need a new time slot later, you will have to create a new booking.</p>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal()" class="btn secondary-btn" style="border: 1px solid #d1d5db;">No, Keep it</button>
+                <button onclick="executeCancellation()" class="btn danger-btn">Yes, cancel booking</button> 
+            </div>
+        </div>
+    </div>
     <script>
         // ==========================================
-        // 1. EXPORT ENTIRE TABLE (The fixed function!)
+        // 1. EXPORT ENTIRE TABLE
         // ==========================================
         function downloadPDF() {
             const element = document.getElementById('appointmentData');
-
-            // Safety check in case the ID was accidentally deleted
-            if (!element) {
-                alert("Error: Table ID missing. Please check step 2!");
-                return;
-            }
-
+            if (!element) return alert("Error: Table ID missing.");
             const header = element.querySelector('.pdf-header');
             if (header) {
                 header.style.display = 'block';
                 header.style.marginBottom = '20px';
             }
-
             const opt = {
                 margin: 10,
                 filename: 'CarePlus_Appointments_History.pdf',
@@ -153,7 +164,6 @@ $result = $conn->query($sql);
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
             };
-
             html2pdf().set(opt).from(element).save().then(() => {
                 if (header) header.style.display = 'none';
             });
@@ -169,7 +179,6 @@ $result = $conn->query($sql);
             document.getElementById(id).classList.toggle('show-dropdown');
         }
 
-        // Close dropdowns if clicking elsewhere
         window.onclick = function (event) {
             if (!event.target.matches('.kebab-btn')) {
                 document.querySelectorAll('.dropdown-content').forEach(el => {
@@ -179,12 +188,25 @@ $result = $conn->query($sql);
         }
 
         // ==========================================
-        // 3. CANCEL BOOKING WARNING
+        // 3. CUSTOM CANCEL MODAL LOGIC
         // ==========================================
+        let pendingCancelId = null;
+
         function confirmCancellation(bookingId) {
-            const warningMessage = "Are you sure you want to cancel this appointment?\n\nPlease note: This action is permanent and cannot be undone. If you need a new time slot later, you will have to create a new booking.";
-            if (confirm(warningMessage)) {
-                window.location.href = "cancel_appointment.php?id=" + bookingId;
+            pendingCancelId = bookingId;
+            document.getElementById('cancelModal').classList.add('show-modal');
+        }
+
+        function closeModal() {
+            document.getElementById('cancelModal').classList.remove('show-modal');
+            pendingCancelId = null;
+        }
+
+        function executeCancellation() {
+            if (pendingCancelId) {
+                window.location.href = "cancel_appointments.php?id=" + pendingCancelId;
+            } else {
+                alert("Error: Could not find the booking ID.");
             }
         }
 
@@ -205,9 +227,7 @@ $result = $conn->query($sql);
                     <p><strong>Time:</strong> ${time}</p>
                     <p><strong>Status:</strong> Confirmed</p>
                 </div>
-                <p style="margin-top: 40px; font-size: 0.8rem; color: #6b7280;">Please arrive 10 minutes prior to your scheduled time.</p>
             `;
-
             const opt = {
                 margin: 10,
                 filename: `CarePlus_Ticket_${bookingId}.pdf`,
@@ -215,7 +235,6 @@ $result = $conn->query($sql);
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
             };
-
             html2pdf().set(opt).from(tempDiv).save();
         }
     </script>
