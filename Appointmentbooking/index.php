@@ -1,6 +1,6 @@
 <?php
 session_start();
-if(isset($_SESSION['user_id'])) {
+if (isset($_SESSION['user_id'])) {
     header("Location: dashboard.php");
     exit();
 }
@@ -9,20 +9,32 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CarePlus - Doctor Appointment Booking</title>
-    <meta name="description" content="CarePlus connects you with top medical professionals for easy, secure, and hassle-free appointment booking across 10 specialties.">
+    <meta name="description"
+        content="CarePlus connects you with top medical professionals for easy, secure, and hassle-free appointment booking across 10 specialties.">
     <link rel="stylesheet" type="text/css" href="style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" type="text/css" media="screen and (max-width:768px)"
+        href="mobile.css?v=<?php echo time(); ?>">
 </head>
+
 <body class="landing-bg-scroll">
 
     <!-- Navbar -->
     <nav class="navbar glass-nav" id="main-nav">
         <div class="container nav-content">
             <h2 class="nav-brand flex-align">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle><line x1="12" y1="11" x2="12" y2="15"></line><line x1="10" y1="13" x2="14" y2="13"></line></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    style="margin-right:8px;">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                    <line x1="12" y1="11" x2="12" y2="15"></line>
+                    <line x1="10" y1="13" x2="14" y2="13"></line>
+                </svg>
                 CarePlus
             </h2>
             <div class="nav-links">
@@ -43,7 +55,8 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
             <div class="hero-content text-center glass-card-large">
                 <span class="hero-badge">🏥 Trusted Healthcare Platform</span>
                 <h1 class="hero-title">Your Health,<br><span class="hero-title-accent">Our Priority</span></h1>
-                <p class="hero-subtitle">Book consultations with top medical professionals. Fast, secure, and hassle-free appointment scheduling at your fingertips.</p>
+                <p class="hero-subtitle">Book consultations with top medical professionals. Fast, secure, and
+                    hassle-free appointment scheduling at your fingertips.</p>
                 <div class="button-group mt-4 flex-center gap-4">
                     <a href="signup.php" class="btn primary-btn btn-lg" id="hero-cta">Book an Appointment</a>
                     <a href="#services" class="btn secondary-btn btn-lg">Explore Services</a>
@@ -65,8 +78,11 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
                 <div class="about-text">
                     <span class="section-badge">About CarePlus</span>
                     <h2 class="section-title">Connecting Patients with the Best Medical Care</h2>
-                    <p class="about-desc">CarePlus was founded with a single mission — to make quality healthcare accessible to everyone. We believe that booking a doctor's appointment should be as simple as a few clicks, with no waiting on hold and no paperwork hassle.</p>
-                    <p class="about-desc">Our platform brings together a curated network of board-certified specialists across 10 medical fields, ensuring you always get expert care tailored to your needs.</p>
+                    <p class="about-desc">CarePlus was founded with a single mission — to make quality healthcare
+                        accessible to everyone. We believe that booking a doctor's appointment should be as simple as a
+                        few clicks, with no waiting on hold and no paperwork hassle.</p>
+                    <p class="about-desc">Our platform brings together a curated network of board-certified specialists
+                        across 10 medical fields, ensuring you always get expert care tailored to your needs.</p>
                     <div class="about-values mt-4">
                         <div class="about-value-item">
                             <span class="about-value-icon">🎯</span>
@@ -184,17 +200,17 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
                 <p class="text-muted">Board-certified specialists committed to your well-being.</p>
             </div>
             <div class="doctors-grid mt-4">
-                <?php if($doctors_res && $doctors_res->num_rows > 0): ?>
-                    <?php while($doc = $doctors_res->fetch_assoc()): ?>
-                    <div class="doctor-card">
-                        <div class="doctor-avatar"><?php echo strtoupper(substr($doc['name'], 0, 1)); ?></div>
-                        <div class="doctor-info">
-                            <h3 class="doctor-name">Dr. <?php echo htmlspecialchars($doc['name']); ?></h3>
-                            <span class="doctor-specialty-badge"><?php echo htmlspecialchars($doc['specialty']); ?></span>
-                            <p class="doctor-contact">📧 <?php echo htmlspecialchars($doc['email']); ?></p>
-                            <p class="doctor-contact">📞 <?php echo htmlspecialchars($doc['phone']); ?></p>
+                <?php if ($doctors_res && $doctors_res->num_rows > 0): ?>
+                    <?php while ($doc = $doctors_res->fetch_assoc()): ?>
+                        <div class="doctor-card">
+                            <div class="doctor-avatar"><?php echo strtoupper(substr($doc['name'], 0, 1)); ?></div>
+                            <div class="doctor-info">
+                                <h3 class="doctor-name">Dr. <?php echo htmlspecialchars($doc['name']); ?></h3>
+                                <span class="doctor-specialty-badge"><?php echo htmlspecialchars($doc['specialty']); ?></span>
+                                <p class="doctor-contact">📧 <?php echo htmlspecialchars($doc['email']); ?></p>
+                                <p class="doctor-contact">📞 <?php echo htmlspecialchars($doc['phone']); ?></p>
+                            </div>
                         </div>
-                    </div>
                     <?php endwhile; ?>
                 <?php endif; ?>
             </div>
@@ -270,7 +286,8 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
             <div class="testimonials-grid mt-4">
                 <div class="testimonial-card">
                     <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-                    <p class="testimonial-text">"CarePlus made it so easy to book my cardiology appointment. I had a confirmed slot within minutes. Absolutely love the platform!"</p>
+                    <p class="testimonial-text">"CarePlus made it so easy to book my cardiology appointment. I had a
+                        confirmed slot within minutes. Absolutely love the platform!"</p>
                     <div class="testimonial-author">
                         <div class="testimonial-avatar">A</div>
                         <div><strong>Aisha Rahman</strong><span>Cardiac Patient</span></div>
@@ -278,7 +295,8 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
                 </div>
                 <div class="testimonial-card">
                     <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-                    <p class="testimonial-text">"Finding a pediatrician for my son used to be stressful. CarePlus solved it — I just pick a specialty, pick a doctor, and I'm done!"</p>
+                    <p class="testimonial-text">"Finding a pediatrician for my son used to be stressful. CarePlus solved
+                        it — I just pick a specialty, pick a doctor, and I'm done!"</p>
                     <div class="testimonial-author">
                         <div class="testimonial-avatar">M</div>
                         <div><strong>Mark Sullivan</strong><span>Parent</span></div>
@@ -286,7 +304,8 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
                 </div>
                 <div class="testimonial-card">
                     <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-                    <p class="testimonial-text">"The secure booking system and instant confirmation gave me peace of mind. I highly recommend CarePlus to anyone looking for quality healthcare."</p>
+                    <p class="testimonial-text">"The secure booking system and instant confirmation gave me peace of
+                        mind. I highly recommend CarePlus to anyone looking for quality healthcare."</p>
                     <div class="testimonial-author">
                         <div class="testimonial-avatar">P</div>
                         <div><strong>Priya Sharma</strong><span>Regular Patient</span></div>
@@ -418,4 +437,5 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
     </footer>
 
 </body>
+
 </html>

@@ -1,0 +1,67 @@
+
+.container {
+    padding: 0 15px; /* Give the edges a little more breathing room */
+}
+
+.card.glass {
+    padding: 20px 15px; /* Shrink the white space inside cards */
+    margin-top: 15px;
+    border-radius: 8px; /* Slightly sharper corners for mobile */
+}
+
+/* 2. Navigation Bar (Stacking) */
+.nav-content {
+    flex-direction: column; /* Stacks the CarePlus Logo on top of the links */
+    align-items: center;
+    gap: 15px;
+}
+
+.nav-links {
+    display: flex;
+    flex-wrap: wrap; /* Lets the links wrap to a second line if the phone is narrow */
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.nav-links a {
+    padding: 8px 12px;
+    font-size: 0.9rem; /* Shrinks the buttons slightly so they fit */
+}
+
+/* 3. Typography Adjustments */
+h2 {
+    font-size: 1.5rem;
+    text-align: center; /* Center-aligns headers on mobile */
+}
+
+/* 4. Modals (The Cancel Popup) */
+.modal-card {
+    width: 95%; /* Takes up exactly 95% of the phone screen */
+    margin: 10px;
+}
+
+/* 5. Forms (The iOS Zoom Fix) */
+.form-group input, 
+.form-group select,
+.form-group textarea {
+    font-size: 16px !important; /* CRITICAL: Prevents iPhones from automatically zooming in when you tap a text box */
+}
+
+.btn.block-btn {
+    width: 100%; /* Ensures buttons stretch all the way across the screen */
+}
+
+/* ==========================================
+   Extra small phones (iPhone SE, older Androids) 
+   ========================================== */
+@media (max-width: 400px) {
+    .nav-links {
+        flex-direction: column;
+        width: 100%;
+    }
+    .nav-links a {
+        text-align: center;
+        width: 100%; /* Makes nav links full-width tap targets */
+    }
+}
