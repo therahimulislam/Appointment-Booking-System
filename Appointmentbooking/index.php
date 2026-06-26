@@ -37,6 +37,10 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
                 </svg>
                 CarePlus
             </h2>
+            <button class="mobile-menu-btn" onclick="document.querySelector('.nav-links').classList.toggle('active')"
+                style="background: none; border: none; font-size: 1.8rem; cursor: pointer; display: none;">
+                ☰
+            </button>
             <div class="nav-links">
                 <a href="#" class="active">Home</a>
                 <a href="#about">About Us</a>
