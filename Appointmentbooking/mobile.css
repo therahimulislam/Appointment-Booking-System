@@ -1,24 +1,28 @@
-
 .container {
-    padding: 0 15px; /* Give the edges a little more breathing room */
+    padding: 0 15px;
+    /* Give the edges a little more breathing room */
 }
 
 .card.glass {
-    padding: 20px 15px; /* Shrink the white space inside cards */
+    padding: 20px 15px;
+    /* Shrink the white space inside cards */
     margin-top: 15px;
-    border-radius: 8px; /* Slightly sharper corners for mobile */
+    border-radius: 8px;
+    /* Slightly sharper corners for mobile */
 }
 
 /* 2. Navigation Bar (Stacking) */
 .nav-content {
-    flex-direction: column; /* Stacks the CarePlus Logo on top of the links */
+    flex-direction: column;
+    /* Stacks the CarePlus Logo on top of the links */
     align-items: center;
     gap: 15px;
 }
 
 .nav-links {
     display: flex;
-    flex-wrap: wrap; /* Lets the links wrap to a second line if the phone is narrow */
+    flex-wrap: wrap;
+    /* Lets the links wrap to a second line if the phone is narrow */
     justify-content: center;
     gap: 8px;
     width: 100%;
@@ -26,30 +30,35 @@
 
 .nav-links a {
     padding: 8px 12px;
-    font-size: 0.9rem; /* Shrinks the buttons slightly so they fit */
+    font-size: 0.9rem;
+    /* Shrinks the buttons slightly so they fit */
 }
 
 /* 3. Typography Adjustments */
 h2 {
     font-size: 1.5rem;
-    text-align: center; /* Center-aligns headers on mobile */
+    text-align: center;
+    /* Center-aligns headers on mobile */
 }
 
 /* 4. Modals (The Cancel Popup) */
 .modal-card {
-    width: 95%; /* Takes up exactly 95% of the phone screen */
+    width: 95%;
+    /* Takes up exactly 95% of the phone screen */
     margin: 10px;
 }
 
 /* 5. Forms (The iOS Zoom Fix) */
-.form-group input, 
+.form-group input,
 .form-group select,
 .form-group textarea {
-    font-size: 16px !important; /* CRITICAL: Prevents iPhones from automatically zooming in when you tap a text box */
+    font-size: 16px !important;
+    /* CRITICAL: Prevents iPhones from automatically zooming in when you tap a text box */
 }
 
 .btn.block-btn {
-    width: 100%; /* Ensures buttons stretch all the way across the screen */
+    width: 100%;
+    /* Ensures buttons stretch all the way across the screen */
 }
 
 /* ==========================================
@@ -61,88 +70,181 @@ h2 {
 
 /* 🔥 THE FIREWALL: ONLY applies to screens smaller than 768px 🔥 */
 @media (max-width: 768px) {
-    
+
     /* 1. Spacing & Typography */
-    .container { padding: 0 15px; }
-    .card { padding: 20px; margin-top: 15px; }
-    .hero-section { padding: 40px 15px 10px; }
-    h2 { font-size: 1.3rem; text-align: center; }
-    .section-header h2 { font-size: 1.8rem; }
+    .container {
+        padding: 0 15px;
+    }
 
-    /* 2. Show the Hamburger Button */
-    .mobile-menu-btn { display: block !important; }
+    .hero-section {
+        padding: 40px 15px 10px;
+    }
 
-    /* 3. Navbar Layout */
-    .nav-content { 
+    h2 {
+        font-size: 1.3rem;
+        text-align: center;
+    }
+
+    .section-header h2 {
+        font-size: 1.8rem;
+    }
+
+    /* 2. FIX: Expand Tiny Login/Signup Cards */
+    .card {
+        width: 100% !important;
+        /* Forces forms to stretch edge-to-edge */
+        max-width: 100% !important;
+        padding: 30px 20px;
+        margin-top: 15px;
+        box-sizing: border-box;
+    }
+
+    /* 3. Show the Hamburger Button */
+    .mobile-menu-btn {
+        display: block !important;
+    }
+
+    /* 4. Navbar Layout */
+    .nav-content {
         display: flex;
-        flex-direction: row; 
-        justify-content: space-between; 
+        flex-direction: row;
+        justify-content: space-between;
         align-items: center;
         width: 100%;
     }
 
-    /* 4. The Hidden Dropdown Menu */
-    .nav-links { 
-        display: none; /* Hidden until clicked */
-        flex-direction: column; 
+    /* 5. The Hidden Dropdown Menu */
+    .nav-links {
+        display: none;
+        flex-direction: column;
         position: absolute;
         top: 70px;
         left: 0;
         width: 100%;
-        background: white; 
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        background: white;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         padding: 0;
         z-index: 100;
         border-bottom-left-radius: 12px;
         border-bottom-right-radius: 12px;
     }
 
-    /* Shows the menu when you tap the 3 lines */
-    .nav-links.active { display: flex; }
+    .nav-links.active {
+        display: flex;
+    }
 
-    /* Fixes the invisible text issue */
-    .nav-links a { 
+    .nav-links a {
         padding: 15px 20px;
         text-align: left;
         border-bottom: 1px solid #f1f5f9;
         width: 100%;
-        color: #0f172a !important; /* Forces dark text */
+        color: #0f172a !important;
         display: block;
     }
 
-    /* 5. Anti-Zoom Inputs (The iOS Trick) */
-    .form-group input, 
+    /* 6. Anti-Zoom Inputs (The iOS Trick) */
+    .form-group input,
     .form-group select,
-    .form-group textarea { 
-        font-size: 16px !important; 
-        padding: 12px; 
+    .form-group textarea {
+        font-size: 16px !important;
+        padding: 12px;
     }
 
-    /* 6. Big Thumb-Friendly Buttons */
-    .btn, .btn.block-btn { 
-        width: 100%; 
-        padding: 14px 20px; 
+    /* 7. Big Thumb-Friendly Buttons */
+    .btn,
+    .btn.block-btn {
+        width: 100%;
+        padding: 14px 20px;
         font-size: 1rem;
     }
 
-    /* 7. Bottom-Sheet Modals */
-    .modal { 
-        align-items: flex-end; 
-        padding-bottom: 0; 
+    /* 8. FIX: Eliminate Horizontal Scrolling (Mobile Table Cards) */
+    .table-container {
+        border: none;
+        background: transparent;
+        padding: 0;
     }
-    .modal-card { 
-        width: 100%; 
-        max-width: 100%; 
-        margin: 0; 
-        border-bottom-left-radius: 0; 
-        border-bottom-right-radius: 0; 
+
+    /* Force the table to behave like standard stacked blocks */
+    table,
+    thead,
+    tbody,
+    th,
+    td,
+    tr {
+        display: block;
+        width: 100%;
+    }
+
+    thead tr {
+        display: none;
+        /* Hides the top headers on mobile */
+    }
+
+    tr {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+        padding: 5px;
+    }
+
+    td {
+        border: none;
+        border-bottom: 1px solid #f8fafc;
+        padding: 12px 15px;
+        text-align: left;
+        font-size: 0.95rem;
+    }
+
+    /* Centers the 3-dots/action button at the bottom of each card */
+    td:last-child {
+        border-bottom: none;
+        display: flex;
+        justify-content: center;
+        padding-top: 15px;
+    }
+
+    /* 9. Bottom-Sheet Modals */
+    .modal {
+        align-items: flex-end;
+        padding-bottom: 0;
+    }
+
+    .modal-card {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
         border-top-left-radius: 24px;
         border-top-right-radius: 24px;
         padding: 30px 20px 40px;
     }
+
     .modal-actions {
-        flex-direction: column; 
+        flex-direction: column;
         gap: 10px;
     }
 
-} /* <-- END OF THE FIREWALL */
+    /* TARGETED FIX: Break the flexbox vice grip on the login/signup page */
+    body.center-content {
+        padding: 20px !important;
+        display: flex !important;
+        align-items: center !important;
+        /* Keeps it vertically centered */
+        justify-content: center !important;
+    }
+
+    body.center-content .card.glass {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+}
+
+/* <-- END OF THE FIREWALL */
