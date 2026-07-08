@@ -52,6 +52,8 @@
     --bg-secondary:     #F8F8F8;
     --bg-tertiary:      #F2F2F2;
     --bg-dark:          #1A1A1A;
+    --nav-bg:           rgba(255, 255, 255, 0.96);
+    --nav-bg-top:       rgba(255, 255, 255, 0.82);
 
     /* Text */
     --text:             #1D1D1F;
@@ -98,6 +100,10 @@
     /* Typography */
     --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
+    /* Overlay/Modal */
+    --overlay:          rgba(0, 0, 0, 0.4);
+    --modal-bg:         #FFFFFF;
+
     /* Transitions */
     --t-fast:           all 0.14s ease;
     --t:                all 0.22s ease;
@@ -130,6 +136,73 @@
     --logout-border:    rgba(255, 59, 48, 0.18);
     --logout-hover-bg:  #FF3B30;
     --logout-hover-text: #170404;
+}
+
+[data-theme="dark"] {
+    /* Backgrounds */
+    --bg:               #000000;
+    --bg-secondary:     #1C1C1E;
+    --bg-tertiary:      #2C2C2E;
+    --bg-dark:          #0A0A0A;
+    --nav-bg:           rgba(28, 28, 30, 0.96);
+    --nav-bg-top:       rgba(28, 28, 30, 0.82);
+    
+    /* Text */
+    --text:             #F5F5F7;
+    --text-secondary:   #86868B;
+    --text-faint:       #515154;
+    
+    /* Borders */
+    --border:           #38383A;
+    --border-light:     #2C2C2E;
+    --border-focus:     #2997FF;
+    
+    /* Accent */
+    --accent:           #2997FF;
+    --accent-hover:     #47A6FF;
+    --accent-active:    #0B84FF;
+    --accent-light:     rgba(41, 151, 255, 0.15);
+    --accent-muted:     rgba(41, 151, 255, 0.1);
+    
+    /* Semantic */
+    --success:          #32D74B;
+    --success-hover:    #34C759;
+    --success-light:    rgba(50, 215, 75, 0.15);
+    --danger:           #FF453A;
+    --danger-hover:     #FF3B30;
+    --danger-light:     rgba(255, 69, 58, 0.15);
+    --warning:          #FF9F0A;
+    --warning-light:    rgba(255, 159, 10, 0.15);
+    
+    /* Shadows */
+    --shadow-xs:        0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-sm:        0 1px 3px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow:           0 4px 12px rgba(0, 0, 0, 0.8);
+    --shadow-lg:        0 8px 24px rgba(0, 0, 0, 0.9);
+    --shadow-xl:        0 16px 40px rgba(0, 0, 0, 0.95);
+    
+    /* Overlay/Modal */
+    --overlay:          rgba(0, 0, 0, 0.7);
+    --modal-bg:         #1C1C1E;
+
+    /* Legacy aliases */
+    --primary:          #2997FF;
+    --primary-hover:    #47A6FF;
+    --primary-light:    rgba(41, 151, 255, 0.15);
+    --secondary:        #32D74B;
+    --secondary-hover:  #34C759;
+    --secondary-light:  rgba(50, 215, 75, 0.15);
+    --dark:             #FFFFFF;
+    --dark-2:           #F5F5F7;
+    --dark-3:           #E5E5E7;
+    --light:            #1C1C1E;
+    --surface:          #000000;
+    --surface-2:        #1C1C1E;
+    --text-color:       #F5F5F7;
+    --text-2:           #86868B;
+    --text-muted:       #86868B;
+    --border-var:       #38383A;
+    --shadow-var:       0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 /* ================================================================
@@ -558,7 +631,7 @@ select {
    ================================================================ */
 .navbar,
 .glass-nav {
-    background: rgba(255, 255, 255, 0.96);
+    background: var(--nav-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: none;
@@ -575,7 +648,7 @@ select {
 
 /* .navbar.top — transparent at very top of page (JS adds/removes) */
 .navbar.top {
-    background: rgba(255, 255, 255, 0.82);
+    background: var(--nav-bg-top);
     border-bottom-color: transparent;
 }
 
@@ -2239,4 +2312,33 @@ select {
     margin-top: 0 !important;
     border-radius: 8px !important;
     box-shadow: none !important;
+}
+
+/* ================================================================
+   THEME TOGGLE
+   ================================================================ */
+.theme-toggle {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-sm);
+    transition: var(--t-fast);
+}
+
+.theme-toggle:hover {
+    color: var(--text);
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .sun-icon {
+    display: block !important;
+}
+
+[data-theme="dark"] .moon-icon {
+    display: none !important;
 }

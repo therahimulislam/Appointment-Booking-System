@@ -19,6 +19,11 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
     <link rel="stylesheet" type="text/css" href="style.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" type="text/css" media="screen and (max-width:768px)"
         href="mobile.css?v=<?php echo time(); ?>">
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
 </head>
 
 <body class="landing-bg-scroll">
@@ -38,14 +43,18 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
             </h2>
             <button class="mobile-menu-btn" onclick="document.querySelector('.nav-links').classList.toggle('active')"
                 aria-label="Toggle navigation">☰</button>
-            <div class="nav-links">
+            <div class="nav-links flex-align" style="gap: 16px;">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
                 <a href="#" class="active">Home</a>
                 <a href="#about">About Us</a>
                 <a href="#services">Services</a>
                 <a href="#doctors">Our Doctors</a>
                 <a href="#why-us">Why Us</a>
                 <a href="#contact">Contact</a>
-                <a href="login.php" class="btn secondary-btn btn-sm">Sign In</a>
+                <a href="login.php" class="btn secondary-btn btn-sm" style="margin-left: 8px;">Sign In</a>
             </div>
         </div>
     </nav>
@@ -527,6 +536,17 @@ $doctors_res = $conn->query("SELECT * FROM doctors ORDER BY specialty ASC LIMIT 
             nav.classList.add('top');
             window.addEventListener('scroll', onScroll, { passive: true });
         })();
+
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+        }
     </script>
 
 </body>
