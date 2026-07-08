@@ -70,7 +70,7 @@ $user = $result->fetch_assoc();
         href="mobile.css?v=<?php echo time(); ?>">
 </head>
 
-<body class="dashboard-bg">
+<body class="app-page">
 
     <nav class="navbar glass-nav">
         <div class="container nav-content">

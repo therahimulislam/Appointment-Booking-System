@@ -20,13 +20,13 @@ $result = $conn->query($sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Appointments - Appointment Booking</title>
+    <title>My Appointments — CarePlus</title>
     <link rel="stylesheet" type="text/css" href="style.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" type="text/css" media="screen and (max-width:768px)" href="mobile.css?v=<?php echo time(); ?>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
-<body class="dashboard-bg">
+<body class="app-page">
 
     <nav class="navbar glass-nav">
         <div class="container nav-content">
@@ -55,7 +55,7 @@ $result = $conn->query($sql);
             <div class="flex-align" style="justify-content: space-between; align-items: center;">
                 <h2>My Appointments</h2>
                 <?php if ($result->num_rows > 0): ?>
-                    <button onclick="downloadPDF()" class="btn secondary-btn btn-sm">📥 Export</button>
+                    <button onclick="downloadPDF()" class="btn secondary-btn btn-sm">Export PDF</button>
                 <?php endif; ?>
             </div>
 
@@ -105,13 +105,12 @@ $result = $conn->query($sql);
                                             onclick="toggleDropdown('drop-<?php echo $row['id']; ?>')">⋮</button>
                                         <div id="drop-<?php echo $row['id']; ?>" class="dropdown-content">
                                             <a href="#"
-                                                onclick="exportSingleTicket('<?php echo htmlspecialchars($row['booking_id']); ?>', '<?php echo htmlspecialchars($row['patient_name']); ?>', '<?php echo htmlspecialchars($row['doctor_name']); ?>', '<?php echo date('F j, Y', strtotime($row['date'])); ?>', '<?php echo date('h:i A', strtotime($row['time'])); ?>')">📄
-                                                Download Ticket</a>
+                                                onclick="exportSingleTicket('<?php echo htmlspecialchars($row['booking_id']); ?>', '<?php echo htmlspecialchars($row['patient_name']); ?>', '<?php echo htmlspecialchars($row['doctor_name']); ?>', '<?php echo date('F j, Y', strtotime($row['date'])); ?>', '<?php echo date('h:i A', strtotime($row['time'])); ?>')">Download Ticket</a>
 
                                             <?php if ($row['date'] >= $today): ?>
-                                                <a href="edit_appointment.php?id=<?php echo $row['id']; ?>">✏️ Edit Details</a>
+                                                <a href="edit_appointment.php?id=<?php echo $row['id']; ?>">Edit Details</a>
                                                 <a href="#" onclick="confirmCancellation(<?php echo $row['id']; ?>)"
-                                                    class="text-danger">🚫 Cancel Booking</a>
+                                                    class="text-danger">Cancel Booking</a>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -131,7 +130,7 @@ $result = $conn->query($sql);
     <div id="cancelModal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-header">
-                <h3>⚠️ Cancel Appointment</h3>
+                <h3>Cancel Appointment</h3>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to cancel this appointment?

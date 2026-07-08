@@ -45,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" type="text/css" href="style.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" type="text/css" media="screen and (max-width:768px)" href="mobile.css?v=<?php echo time(); ?>">
 </head>
-<body class="dashboard-bg">
+<body class="app-page">
 
     <nav class="navbar glass-nav">
         <div class="container nav-content">
