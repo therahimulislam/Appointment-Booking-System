@@ -129,7 +129,7 @@
     --logout-text:      #D93025;
     --logout-border:    rgba(255, 59, 48, 0.18);
     --logout-hover-bg:  #FF3B30;
-    --logout-hover-text: #FFFFFF;
+    --logout-hover-text: #170404;
 }
 
 /* ================================================================
@@ -2226,4 +2226,17 @@ select {
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
+}
+
+/* ================================================================
+   PDF PRINT OVERRIDES
+   ================================================================ */
+.pdf-printing th:last-child,
+.pdf-printing td:last-child {
+    display: none !important;
+}
+.pdf-printing .styled-table {
+    margin-top: 0 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
 }

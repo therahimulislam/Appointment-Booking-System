@@ -61,7 +61,21 @@ $result = $conn->query($sql);
 
             <?php if ($result->num_rows > 0): ?>
                 <div id="appointmentData" class="table-responsive">
-                    <h3 style="display: none;" class="pdf-header">CarePlus - Appointment History</h3>
+                    <!-- Professional Print Header -->
+                    <div class="pdf-header" style="display: none; border-bottom: 2px solid #0071E3; padding-bottom: 12px; margin-bottom: 20px; font-family: system-ui, -apple-system, sans-serif;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 32px; height: 32px; background: #EBF3FC; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #0071E3;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle><line x1="12" y1="11" x2="12" y2="15"></line><line x1="10" y1="13" x2="14" y2="13"></line></svg>
+                                </div>
+                                <span style="font-weight: 700; font-size: 1.25rem; color: #1D1D1F; letter-spacing: -0.02em;">CarePlus Medical Center</span>
+                            </div>
+                            <div style="text-align: right; color: #6E6E73; font-size: 0.75rem; line-height: 1.4;">
+                                <strong style="color: #1D1D1F; font-size: 0.85rem;">Appointment History Report</strong><br>
+                                Generated: <?php echo date('F j, Y'); ?>
+                            </div>
+                        </div>
+                    </div>
                     <table class="styled-table">
                         <thead>
                             <tr>
@@ -105,7 +119,7 @@ $result = $conn->query($sql);
                                             onclick="toggleDropdown('drop-<?php echo $row['id']; ?>')">⋮</button>
                                         <div id="drop-<?php echo $row['id']; ?>" class="dropdown-content">
                                             <a href="#"
-                                                onclick="exportSingleTicket('<?php echo htmlspecialchars($row['booking_id']); ?>', '<?php echo htmlspecialchars($row['patient_name']); ?>', '<?php echo htmlspecialchars($row['doctor_name']); ?>', '<?php echo date('F j, Y', strtotime($row['date'])); ?>', '<?php echo date('h:i A', strtotime($row['time'])); ?>')">Download Ticket</a>
+                                                onclick="exportSingleTicket('<?php echo htmlspecialchars($row['booking_id']); ?>', '<?php echo htmlspecialchars($row['patient_name']); ?>', '<?php echo htmlspecialchars($row['doctor_name'] ? $row['doctor_name'] : 'Unassigned'); ?>', '<?php echo htmlspecialchars($row['doctor_specialty'] ? $row['doctor_specialty'] : 'General Medicine'); ?>', '<?php echo date('F j, Y', strtotime($row['date'])); ?>', '<?php echo date('h:i A', strtotime($row['time'])); ?>')">Download Receipt</a>
 
                                             <?php if ($row['date'] >= $today): ?>
                                                 <a href="edit_appointment.php?id=<?php echo $row['id']; ?>">Edit Details</a>
@@ -149,25 +163,34 @@ $result = $conn->query($sql);
         // ==========================================
         // 1. EXPORT ENTIRE TABLE
         // ==========================================
-        function downloadPDF() {
-            const element = document.getElementById('appointmentData');
-            if (!element) return alert("Error: Table ID missing.");
-            const header = element.querySelector('.pdf-header');
-            if (header) {
-                header.style.display = 'block';
-                header.style.marginBottom = '20px';
-            }
-            const opt = {
-                margin: 10,
-                filename: 'CarePlus_Appointments_History.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            };
-            html2pdf().set(opt).from(element).save().then(() => {
-                if (header) header.style.display = 'none';
-            });
-        }
+         function downloadPDF() {
+             const element = document.getElementById('appointmentData');
+             if (!element) return alert("Error: Table ID missing.");
+             
+             // Add printing class to hide action column and format layout
+             element.classList.add('pdf-printing');
+
+             const header = element.querySelector('.pdf-header');
+             if (header) {
+                 header.style.display = 'flex';
+             }
+
+             const opt = {
+                 margin: 12,
+                 filename: 'CarePlus_Appointments_History.pdf',
+                 image: { type: 'jpeg', quality: 0.98 },
+                 html2canvas: { scale: 2 },
+                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+             };
+
+             html2pdf().set(opt).from(element).save().then(() => {
+                 // Restore layout state
+                 element.classList.remove('pdf-printing');
+                 if (header) {
+                     header.style.display = 'none';
+                 }
+             });
+         }
 
         // ==========================================
         // 2. TOGGLE 3-DOTS DROPDOWN
@@ -213,30 +236,124 @@ $result = $conn->query($sql);
         // ==========================================
         // 4. EXPORT SINGLE TICKET
         // ==========================================
-        function exportSingleTicket(bookingId, patient, doctor, date, time) {
-            const tempDiv = document.createElement('div');
-            tempDiv.style.padding = '40px';
-            tempDiv.style.fontFamily = 'Inter, sans-serif';
-            tempDiv.innerHTML = `
-                <h2 style="color: #4f46e5; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">CarePlus Appointment Ticket</h2>
-                <div style="margin-top: 20px; line-height: 2;">
-                    <p><strong>Booking ID:</strong> ${bookingId}</p>
-                    <p><strong>Patient Name:</strong> ${patient}</p>
-                    <p><strong>Doctor:</strong> Dr. ${doctor}</p>
-                    <p><strong>Date:</strong> ${date}</p>
-                    <p><strong>Time:</strong> ${time}</p>
-                    <p><strong>Status:</strong> Confirmed</p>
-                </div>
-            `;
-            const opt = {
-                margin: 10,
-                filename: `CarePlus_Ticket_${bookingId}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(tempDiv).save();
-        }
+        function exportSingleTicket(bookingId, patient, doctor, specialty, date, time) {
+             const tempDiv = document.createElement('div');
+             
+             // Base ticket container styling — slightly more compact to ensure clean A5 fits on 1 page
+             tempDiv.style.width = '420px';
+             tempDiv.style.background = '#FFF';
+             tempDiv.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+             tempDiv.style.color = '#1D1D1F';
+             
+             // Construct current date string
+             const generatedDateStr = new Date().toLocaleDateString('en-US', { 
+                 month: 'short', 
+                 day: 'numeric', 
+                 year: 'numeric' 
+             });
+
+             tempDiv.innerHTML = `
+                 <div style="padding: 20px; border: 1px solid #E5E5E7; border-radius: 12px; background: #FFFFFF; position: relative; overflow: hidden; box-sizing: border-box;">
+                     <!-- Receipt Header -->
+                     <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #E5E5E7; padding-bottom: 12px; margin-bottom: 16px;">
+                         <div>
+                             <div style="display: flex; align-items: center; gap: 8px;">
+                                 <div style="width: 28px; height: 28px; background: #EBF3FC; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #0071E3;">
+                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle><line x1="12" y1="11" x2="12" y2="15"></line><line x1="10" y1="13" x2="14" y2="13"></line></svg>
+                                 </div>
+                                 <span style="font-weight: 700; font-size: 1.05rem; color: #1D1D1F; letter-spacing: -0.02em;">CarePlus</span>
+                             </div>
+                             <div style="font-size: 0.72rem; color: #6E6E73; margin-top: 4px; line-height: 1.3;">
+                                 CarePlus Medical Center<br>
+                                 123 Medical Center Drive, Health City<br>
+                                 Support: +1 (555) 000-1234
+                             </div>
+                         </div>
+                         <div style="text-align: right;">
+                             <div style="font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em; color: #6E6E73; text-transform: uppercase;">Appointment Receipt</div>
+                             <div style="font-size: 0.95rem; font-weight: 700; color: #0071E3; margin-top: 2px; letter-spacing: -0.01em;">${bookingId}</div>
+                             <div style="margin-top: 4px;">
+                                 <span style="display: inline-block; background: #EBF8EF; color: #166534; border: 1px solid rgba(52, 199, 89, 0.25); font-size: 0.62rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.02em;">Confirmed</span>
+                             </div>
+                         </div>
+                     </div>
+
+                     <!-- Patient details -->
+                     <div style="margin-bottom: 16px;">
+                         <div style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #6E6E73; margin-bottom: 6px;">Patient Information</div>
+                         <div style="background: #F8F8F8; border-radius: 8px; padding: 10px; border: 1px solid #E5E5E7;">
+                             <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px;">
+                                 <span style="color: #6E6E73;">Full Name:</span>
+                                 <strong style="color: #1D1D1F; font-weight: 600;">${patient}</strong>
+                             </div>
+                             <div style="display: flex; justify-content: space-between; font-size: 0.82rem;">
+                                 <span style="color: #6E6E73;">Patient Class:</span>
+                                 <strong style="color: #1D1D1F; font-weight: 500;">Registered Outpatient</strong>
+                             </div>
+                         </div>
+                     </div>
+
+                     <!-- Appointment details -->
+                     <div style="margin-bottom: 16px;">
+                         <div style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #6E6E73; margin-bottom: 6px;">Appointment Details</div>
+                         <div style="border: 1px solid #E5E5E7; border-radius: 8px; overflow: hidden; background: #FFFFFF;">
+                             <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left;">
+                                 <tr style="border-bottom: 1px solid #E5E5E7;">
+                                     <td style="padding: 8px 10px; background: #F8F8F8; color: #6E6E73; width: 30%; font-weight: 500;">Doctor</td>
+                                     <td style="padding: 8px 10px; color: #1D1D1F; font-weight: 600;">Dr. ${doctor}</td>
+                                 </tr>
+                                 <tr style="border-bottom: 1px solid #E5E5E7;">
+                                     <td style="padding: 8px 10px; background: #F8F8F8; color: #6E6E73; font-weight: 500;">Specialty</td>
+                                     <td style="padding: 8px 10px; color: #1D1D1F; font-weight: 500;">${specialty}</td>
+                                 </tr>
+                                 <tr style="border-bottom: 1px solid #E5E5E7;">
+                                     <td style="padding: 8px 10px; background: #F8F8F8; color: #6E6E73; font-weight: 500;">Date</td>
+                                     <td style="padding: 8px 10px; color: #1D1D1F; font-weight: 500;">${date}</td>
+                                 </tr>
+                                 <tr style="border-bottom: 1px solid #E5E5E7;">
+                                     <td style="padding: 8px 10px; background: #F8F8F8; color: #6E6E73; font-weight: 500;">Time Slot</td>
+                                     <td style="padding: 8px 10px; color: #1D1D1F; font-weight: 600;">${time}</td>
+                                 </tr>
+                                 <tr>
+                                     <td style="padding: 8px 10px; background: #F8F8F8; color: #6E6E73; font-weight: 500;">Location</td>
+                                     <td style="padding: 8px 10px; color: #1D1D1F; font-weight: 400;">Main Building, Clinic Suite 204</td>
+                                 </tr>
+                             </table>
+                         </div>
+                     </div>
+
+                     <!-- Instructions -->
+                     <div style="border-top: 1px dashed #E5E5E7; padding-top: 12px; font-size: 0.72rem; color: #6E6E73; line-height: 1.45;">
+                         <strong style="color: #1D1D1F; display: block; margin-bottom: 2px; font-weight: 600;">Important Instructions:</strong>
+                         <ul style="margin: 0; padding-left: 14px; color: #6E6E73;">
+                             <li>Please arrive at least 15 minutes before your scheduled appointment time.</li>
+                             <li>Present this booking confirmation receipt at the front clinic desk.</li>
+                         </ul>
+                     </div>
+
+                     <!-- Auto-generated Disclaimer Note -->
+                     <div style="margin-top: 14px; background: #F8F8F8; border-radius: 6px; padding: 8px; border: 1px solid #E5E5E7; font-size: 0.65rem; color: #8E8E93; text-align: center; font-style: italic;">
+                         * Note: This is an auto-generated e-receipt. No physical signature is required.
+                     </div>
+
+                     <!-- Receipt Footer -->
+                     <div style="margin-top: 16px; border-top: 1px solid #E5E5E7; padding-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; color: #A1A1A6;">
+                         <span>Generated: ${generatedDateStr}</span>
+                         <span>CarePlus Clinic Management System</span>
+                     </div>
+                 </div>
+             `;
+
+             const opt = {
+                 margin: 10,
+                 filename: `CarePlus_Receipt_${bookingId}.pdf`,
+                 image: { type: 'jpeg', quality: 0.99 },
+                 html2canvas: { scale: 2, useCORS: true },
+                 jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
+             };
+             
+             html2pdf().set(opt).from(tempDiv).save();
+         }
     </script>
 </body>
 
