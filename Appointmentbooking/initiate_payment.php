@@ -5,16 +5,28 @@
 //  "Confirm Booking". Validates data, then creates a Cashfree
 //  order and returns the payment_session_id as JSON.
 // ============================================================
+
+// Capture ALL output so stray PHP warnings never corrupt our JSON
+ob_start();
+// Redirect errors to log only (not to browser output)
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
+    ob_clean();
     http_response_code(401);
+    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'error' => 'Not authenticated.']);
     exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    ob_clean();
     http_response_code(405);
+    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'error' => 'Method not allowed.']);
     exit();
 }
@@ -22,8 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 require 'db_connect.php';
 // config.php is already loaded by db_connect.php
 
+ob_clean(); // discard any output from db_connect / config
 header('Content-Type: application/json');
-
 
 
 // ── 1. Read & sanitise inputs ────────────────────────────────
