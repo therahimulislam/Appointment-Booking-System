@@ -55,22 +55,71 @@
         font-size: 1.75rem;
     }
 
-    /* ── Navigation ── */
+    /* ================================================================
+       HAMBURGER MENU
+       ================================================================ */
 
-    /* Show hamburger, hide links by default */
+    /* Show hamburger button */
     .mobile-menu-btn {
-        display: block !important;
+        display: flex !important;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 8px;
+        transition: background 0.2s ease;
+        z-index: 200;
+        flex-shrink: 0;
     }
 
+    .mobile-menu-btn:hover {
+        background: rgba(0, 0, 0, 0.06);
+    }
+
+    [data-theme="dark"] .mobile-menu-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Hamburger bars */
+    .ham-bar {
+        display: block;
+        width: 22px;
+        height: 2px;
+        background: var(--text, #1D1D1F);
+        border-radius: 2px;
+        transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
+        transform-origin: center;
+    }
+
+    /* Animate to X when open */
+    .mobile-menu-btn.open .ham-bar:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+    }
+    .mobile-menu-btn.open .ham-bar:nth-child(2) {
+        opacity: 0;
+        width: 0;
+    }
+    .mobile-menu-btn.open .ham-bar:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+    }
+
+    /* ── Nav layout on mobile ── */
     .nav-content {
         display: flex;
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
         width: 100%;
+        position: relative;
     }
 
-    /* Dropdown nav on mobile */
+    /* ── Dropdown nav panel ── */
     .nav-links {
         display: none;
         flex-direction: column;
@@ -78,71 +127,124 @@
         top: 60px;
         left: 0;
         right: 0;
-        background: #FFFFFF;
-        border-bottom: 1px solid #E5E5E7;
-        padding: 8px 0;
-        z-index: 99;
+        background: var(--card-bg, #ffffff);
+        border-bottom: 1px solid var(--border, #E5E5E7);
+        padding: 6px 0 12px;
+        z-index: 199;
         gap: 0;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+        border-radius: 0 0 16px 16px;
     }
 
     .nav-links.active {
         display: flex;
     }
 
+    /* ── Dark mode dropdown background ── */
+    [data-theme="dark"] .nav-links {
+        background: var(--card-bg, #1c1c1e);
+        border-color: var(--border, #38383a);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ── Nav links inside dropdown ── */
     .nav-links a {
         padding: 13px 20px;
         text-align: left;
         border-radius: 0;
-        border-bottom: 1px solid #F0F0F2;
+        border-bottom: 1px solid var(--border, #F0F0F2);
         width: 100%;
-        color: #1D1D1F !important;
+        color: var(--text, #1D1D1F) !important;
         font-size: 0.9375rem;
-        display: block;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
         background: transparent;
+        text-decoration: none;
+        transition: background 0.15s ease;
+        box-sizing: border-box;
     }
 
-    .nav-links a:last-child {
+    .nav-links a:hover {
+        background: var(--bg-secondary, #f5f5f7);
+    }
+
+    .nav-links a:last-of-type {
         border-bottom: none;
     }
 
     .nav-links a.active {
-        color: #0071E3 !important;
-        background: #EBF3FC;
+        color: var(--accent, #0071E3) !important;
+        background: var(--accent-light, #EBF3FC);
+        font-weight: 600;
     }
 
-    /* ── Logout button on mobile nav ─────────────────────── */
+    /* ── Theme toggle row inside dropdown ── */
+    .nav-links .theme-toggle {
+        display: flex !important;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 13px 20px;
+        border: none;
+        border-bottom: 1px solid var(--border, #F0F0F2);
+        background: transparent;
+        color: var(--text, #1D1D1F);
+        font-size: 0.9375rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-align: left;
+        border-radius: 0;
+        box-sizing: border-box;
+        transition: background 0.15s ease;
+        font-family: var(--font, inherit);
+    }
+
+    .nav-links .theme-toggle:hover {
+        background: var(--bg-secondary, #f5f5f7);
+    }
+
+    /* Add a label next to the theme icon */
+    .nav-links .theme-toggle::after {
+        content: 'Toggle Dark Mode';
+        font-size: 0.9375rem;
+    }
+
+    /* ── Logout button inside dropdown ── */
     .nav-links .btn-logout {
-        display: block;
+        display: flex !important;
+        align-items: center;
         width: calc(100% - 32px);
-        margin: 6px 16px 10px;
+        margin: 8px 16px 4px;
         padding: 12px 16px;
         text-align: center;
+        justify-content: center;
         font-size: 0.9375rem;
         font-weight: 600;
         border-radius: 10px;
         background: #fff1f2;
         color: #be123c !important;
-        border: 1.5px solid #fda4af;
+        border: 1.5px solid #fda4af !important;
         box-sizing: border-box;
         transition: background 0.15s ease, color 0.15s ease;
+        text-decoration: none;
     }
 
     .nav-links .btn-logout:hover,
     .nav-links .btn-logout:active {
-        background: #ffe4e6;
+        background: #ffe4e6 !important;
         color: #9f1239 !important;
-        border-color: #fb7185;
+        border-color: #fb7185 !important;
     }
 
     [data-theme="dark"] .nav-links .btn-logout {
-        background: rgba(239, 68, 68, 0.12);
+        background: rgba(239, 68, 68, 0.12) !important;
         color: #fca5a5 !important;
-        border-color: rgba(239, 68, 68, 0.3);
+        border-color: rgba(239, 68, 68, 0.35) !important;
     }
 
     [data-theme="dark"] .nav-links .btn-logout:hover {
-        background: rgba(239, 68, 68, 0.22);
+        background: rgba(239, 68, 68, 0.22) !important;
         color: #f87171 !important;
     }
 

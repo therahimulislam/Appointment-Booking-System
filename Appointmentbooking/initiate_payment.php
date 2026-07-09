@@ -20,11 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 require 'db_connect.php';
-require 'config.php';
+// config.php is already loaded by db_connect.php
 
 header('Content-Type: application/json');
 
-date_default_timezone_set('Asia/Kolkata');
+
 
 // ── 1. Read & sanitise inputs ────────────────────────────────
 $date         = $conn->real_escape_string(trim($_POST['date']         ?? ''));

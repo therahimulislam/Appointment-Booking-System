@@ -24,6 +24,7 @@ $result = $conn->query($sql);
     <link rel="stylesheet" type="text/css" href="style.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" type="text/css" media="screen and (max-width:768px)" href="mobile.css?v=<?php echo time(); ?>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.setAttribute('data-theme', 'dark');
@@ -46,7 +47,16 @@ $result = $conn->query($sql);
                 </svg>
                 CarePlus
             </h2>
-            <div class="nav-links">
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle navigation" aria-expanded="false">
+                <span class="ham-bar"></span>
+                <span class="ham-bar"></span>
+                <span class="ham-bar"></span>
+            </button>
+            <div class="nav-links" id="nav-links">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
                 <a href="dashboard.php">Dashboard</a>
                 <a href="appointments.php" class="active">My Appointments</a>
                 <a href="profile.php">Profile</a>
@@ -111,8 +121,10 @@ $result = $conn->query($sql);
 
                                     <td>
                                         <?php
-                                        $today = date('Y-m-d');
-                                        if ($row['date'] < $today) {
+                                        $current_date = date('Y-m-d');
+                                        $current_time = date('H:i:s');
+                                        
+                                        if ($row['date'] < $current_date || ($row['date'] == $current_date && $row['time'] < $current_time)) {
                                             echo '<span class="badge" style="background-color: #e5e7eb; color: #4b5563;">Completed</span>';
                                         } else {
                                             echo '<span class="badge success-badge">Upcoming</span>';
@@ -124,11 +136,11 @@ $result = $conn->query($sql);
                                         <?php
                                         $pmtStatus = $row['payment_status'] ?? 'paid'; // 'paid','pending','failed'
                                         if ($pmtStatus === 'paid') {
-                                            echo '<span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;">✅ Paid</span>';
+                                            echo '<span class="badge" style="background:#EBF3FC;color:#0071E3;border:1px solid #B6D4F8;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Paid</span>';
                                         } elseif ($pmtStatus === 'pending') {
-                                            echo '<span class="badge" style="background:#fef9c3;color:#92400e;border:1px solid #fde68a;">⏳ Pending</span>';
+                                            echo '<span class="badge" style="background:#fef9c3;color:#92400e;border:1px solid #fde68a;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Pending</span>';
                                         } else {
-                                            echo '<span class="badge" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;">❌ Failed</span>';
+                                            echo '<span class="badge" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Failed</span>';
                                         }
                                         ?>
                                     </td>
@@ -138,12 +150,18 @@ $result = $conn->query($sql);
                                             onclick="toggleDropdown('drop-<?php echo $row['id']; ?>')">⋮</button>
                                         <div id="drop-<?php echo $row['id']; ?>" class="dropdown-content">
                                             <a href="#"
-                                                onclick="exportSingleTicket('<?php echo htmlspecialchars($row['booking_id']); ?>', '<?php echo htmlspecialchars($row['patient_name']); ?>', '<?php echo htmlspecialchars($row['doctor_name'] ? $row['doctor_name'] : 'Unassigned'); ?>', '<?php echo htmlspecialchars($row['doctor_specialty'] ? $row['doctor_specialty'] : 'General Medicine'); ?>', '<?php echo date('F j, Y', strtotime($row['date'])); ?>', '<?php echo date('h:i A', strtotime($row['time'])); ?>')">Download Receipt</a>
+                                                onclick="exportSingleTicket('<?php echo htmlspecialchars($row['booking_id']); ?>', '<?php echo htmlspecialchars($row['patient_name']); ?>', '<?php echo htmlspecialchars($row['doctor_name'] ? $row['doctor_name'] : 'Unassigned'); ?>', '<?php echo htmlspecialchars($row['doctor_specialty'] ? $row['doctor_specialty'] : 'General Medicine'); ?>', '<?php echo date('F j, Y', strtotime($row['date'])); ?>', '<?php echo date('h:i A', strtotime($row['time'])); ?>', '<?php echo htmlspecialchars(ucfirst($pmtStatus)); ?>', '<?php echo number_format(CONSULTATION_FEE, 0); ?>', '<?php echo htmlspecialchars($row['cf_order_id'] ?? 'N/A'); ?>')">Download Receipt</a>
 
-                                            <?php if ($row['date'] >= $today): ?>
+                                            <?php 
+                                            $appt_timestamp = strtotime($row['date'] . ' ' . $row['time']);
+                                            $time_diff = $appt_timestamp - time();
+                                            if ($time_diff >= (6 * 3600)): 
+                                            ?>
                                                 <a href="edit_appointment.php?id=<?php echo $row['id']; ?>">Edit Details</a>
                                                 <a href="#" onclick="confirmCancellation(<?php echo $row['id']; ?>)"
                                                     class="text-danger">Cancel Booking</a>
+                                            <?php elseif ($appt_timestamp > time()): ?>
+                                                <a href="#" class="text-muted" style="cursor:not-allowed;" title="Cannot cancel within 6 hours of appointment" onclick="alert('Appointments cannot be cancelled within 6 hours of the scheduled time.'); return false;">Cancel Booking</a>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -255,11 +273,12 @@ $result = $conn->query($sql);
         // ==========================================
         // 4. EXPORT SINGLE TICKET
         // ==========================================
-        function exportSingleTicket(bookingId, patient, doctor, specialty, date, time) {
+        function exportSingleTicket(bookingId, patient, doctor, specialty, date, time, paymentStatus, paymentAmount, orderId) {
              const tempDiv = document.createElement('div');
              
-             // Base ticket container styling — slightly more compact to ensure clean A5 fits on 1 page
-             tempDiv.style.width = '420px';
+             // Base ticket container styling — scaled for A4
+             tempDiv.style.width = '700px';
+             tempDiv.style.padding = '40px';
              tempDiv.style.background = '#FFF';
              tempDiv.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
              tempDiv.style.color = '#1D1D1F';
@@ -272,27 +291,25 @@ $result = $conn->query($sql);
              });
 
              tempDiv.innerHTML = `
-                 <div style="padding: 20px; border: 1px solid #E5E5E7; border-radius: 12px; background: #FFFFFF; position: relative; overflow: hidden; box-sizing: border-box;">
-                     <!-- Receipt Header -->
-                     <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #E5E5E7; padding-bottom: 12px; margin-bottom: 16px;">
-                         <div>
-                             <div style="display: flex; align-items: center; gap: 8px;">
-                                 <div style="width: 28px; height: 28px; background: #EBF3FC; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #0071E3;">
-                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle><line x1="12" y1="11" x2="12" y2="15"></line><line x1="10" y1="13" x2="14" y2="13"></line></svg>
-                                 </div>
-                                 <span style="font-weight: 700; font-size: 1.05rem; color: #1D1D1F; letter-spacing: -0.02em;">CarePlus</span>
+                 <div style="border: 1px solid #E5E5E7; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                     <!-- Header -->
+                     <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #E5E5E7; padding-bottom: 20px; margin-bottom: 20px; align-items: flex-start;">
+                         <div style="display: flex; align-items: center; gap: 12px;">
+                             <div style="width: 48px; height: 48px; background: #EBF3FC; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #0071E3;">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle><line x1="12" y1="11" x2="12" y2="15"></line><line x1="10" y1="13" x2="14" y2="13"></line></svg>
                              </div>
-                             <div style="font-size: 0.72rem; color: #6E6E73; margin-top: 4px; line-height: 1.3;">
-                                 CarePlus Medical Center<br>
-                                 123 Medical Center Drive, Health City<br>
-                                 Support: +1 (555) 000-1234
+                             <div>
+                                 <div style="font-size: 1.4rem; font-weight: 700; color: #1D1D1F; letter-spacing: -0.02em;">CarePlus Center</div>
+                                 <div style="font-size: 0.85rem; color: #6E6E73; margin-top: 2px;">Official Booking Receipt</div>
                              </div>
                          </div>
                          <div style="text-align: right;">
-                             <div style="font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em; color: #6E6E73; text-transform: uppercase;">Appointment Receipt</div>
-                             <div style="font-size: 0.95rem; font-weight: 700; color: #0071E3; margin-top: 2px; letter-spacing: -0.01em;">${bookingId}</div>
+                             <div style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: #6E6E73; text-transform: uppercase;">Appointment Receipt</div>
+                             <div style="margin-top: 8px;">
+                                 <svg id="receipt-barcode"></svg>
+                             </div>
                              <div style="margin-top: 4px;">
-                                 <span style="display: inline-block; background: #EBF8EF; color: #166534; border: 1px solid rgba(52, 199, 89, 0.25); font-size: 0.62rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.02em;">Confirmed</span>
+                                 <span style="display: inline-block; background: #EBF8EF; color: #166534; border: 1px solid rgba(52, 199, 89, 0.25); font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.02em;">Confirmed</span>
                              </div>
                          </div>
                      </div>
@@ -333,9 +350,27 @@ $result = $conn->query($sql);
                                      <td style="padding: 8px 10px; background: #F8F8F8; color: #6E6E73; font-weight: 500;">Time Slot</td>
                                      <td style="padding: 8px 10px; color: #1D1D1F; font-weight: 600;">${time}</td>
                                  </tr>
+                                 <tr style="border-bottom: 1px solid #E5E5E7;">
+                                     <td style="padding: 8px 10px; background: #F8F8F8; color: #6E6E73; font-weight: 500;">Payment Status</td>
+                                     <td style="padding: 8px 10px; color: ${paymentStatus === 'Paid' ? '#15803d' : '#b91c1c'}; font-weight: 600;">
+                                         ${paymentStatus} (₹${paymentAmount})
+                                     </td>
+                                 </tr>
+                                 <tr style="border-bottom: 1px solid #E5E5E7;">
+                                     <td style="padding: 8px 10px; background: #F8F8F8; color: #6E6E73; font-weight: 500;">Order Ref</td>
+                                     <td style="padding: 8px 10px; color: #1D1D1F; font-weight: 500; font-size: 0.75rem;">
+                                         ${orderId !== 'N/A' && orderId !== '' ? orderId : 'N/A'}
+                                     </td>
+                                 </tr>
+                                 <tr style="border-bottom: 1px solid #E5E5E7;">
+                                     <td style="padding: 12px 14px; background: #F8F8F8; color: #6E6E73; font-weight: 500;">Payment Method</td>
+                                     <td style="padding: 12px 14px; color: #1D1D1F; font-weight: 500;">
+                                         ${orderId !== 'N/A' && orderId !== '' ? 'Online (Cashfree Gateway)' : 'Pay at Clinic'}
+                                     </td>
+                                 </tr>
                                  <tr>
-                                     <td style="padding: 8px 10px; background: #F8F8F8; color: #6E6E73; font-weight: 500;">Location</td>
-                                     <td style="padding: 8px 10px; color: #1D1D1F; font-weight: 400;">Main Building, Clinic Suite 204</td>
+                                     <td style="padding: 12px 14px; background: #F8F8F8; color: #6E6E73; font-weight: 500;">Location</td>
+                                     <td style="padding: 12px 14px; color: #1D1D1F; font-weight: 400;">Main Building, Clinic Suite 204</td>
                                  </tr>
                              </table>
                          </div>
@@ -363,16 +398,47 @@ $result = $conn->query($sql);
                  </div>
              `;
 
+             // Render Barcode before printing
+             JsBarcode(tempDiv.querySelector("#receipt-barcode"), bookingId, {
+                 format: "CODE128",
+                 height: 40,
+                 width: 1.5,
+                 displayValue: true,
+                 fontSize: 14,
+                 margin: 0
+             });
+
              const opt = {
-                 margin: 10,
+                 margin: 15,
                  filename: `CarePlus_Receipt_${bookingId}.pdf`,
                  image: { type: 'jpeg', quality: 0.99 },
                  html2canvas: { scale: 2, useCORS: true },
-                 jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
+                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
              };
              
              html2pdf().set(opt).from(tempDiv).save();
          }
+
+        // Hamburger Menu Logic
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const navLinks = document.getElementById('nav-links');
+        if (mobileBtn && navLinks) {
+            mobileBtn.addEventListener('click', () => {
+                mobileBtn.classList.toggle('open');
+                navLinks.classList.toggle('active');
+            });
+        }
+
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+        }
     </script>
 </body>
 

@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-date_default_timezone_set('Asia/Kolkata');
+
 
 $error   = '';
 $success = '';
