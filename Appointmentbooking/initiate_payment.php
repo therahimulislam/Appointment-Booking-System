@@ -75,8 +75,25 @@ if ($apptDatetime < $cutoff) {
 }
 
 // ── 3. Conflict check ────────────────────────────────────────
-$check = $conn->query("SELECT id FROM bookings WHERE date='$date' AND time='$time' AND doctor_id='$doctor_id' AND payment_status != 'failed'");
-if ($check && $check->num_rows > 0) {
+// Safely check for booking conflict — handles both old DB (no payment_status) and new DB
+$checkQuery = $conn->query("SELECT id FROM bookings WHERE date='$date' AND time='$time' AND doctor_id='$doctor_id'");
+if ($checkQuery === false) {
+    // DB query failed — log and return error
+    error_log('Conflict check query failed: ' . $conn->error);
+    echo json_encode(['success' => false, 'error' => 'Database error. Please contact support.']);
+    exit();
+}
+// Only block if payment_status column exists and slot is not failed
+// Check if column exists
+$hasPaymentStatus = false;
+$colCheck = $conn->query("SHOW COLUMNS FROM bookings LIKE 'payment_status'");
+if ($colCheck && $colCheck->num_rows > 0) {
+    $hasPaymentStatus = true;
+}
+if ($hasPaymentStatus) {
+    $checkQuery = $conn->query("SELECT id FROM bookings WHERE date='$date' AND time='$time' AND doctor_id='$doctor_id' AND payment_status != 'failed'");
+}
+if ($checkQuery && $checkQuery->num_rows > 0) {
     echo json_encode(['success' => false, 'error' => 'This time slot is already booked. Please choose another time or doctor.']);
     exit();
 }
