@@ -103,7 +103,7 @@ $orderData = [
         'customer_id'    => 'user_' . $user_id,
         'customer_name'  => $user['name'],
         'customer_email' => $user['email'],
-        'customer_phone' => preg_replace('/\D/', '', $user['phone'] ?? '9999999999'), // digits only
+        'customer_phone' => preg_replace('/\D/', '', (string)($user['phone'] ?? '9999999999')), // digits only
     ],
     'order_meta' => [
         'return_url'    => APP_BASE_URL . '/payment_return.php?order_id={order_id}',

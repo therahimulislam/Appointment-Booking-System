@@ -423,7 +423,15 @@ require 'db_connect.php';
                     method: 'POST',
                     body: formData,
                 });
-                const data = await res.json();
+                
+                const rawText = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(rawText);
+                } catch (parseErr) {
+                    console.error("Failed to parse JSON. Raw response from PHP:", rawText);
+                    throw new Error("Server returned invalid response. Please check server logs.");
+                }
 
                 if (!data.success) {
                     hideOverlay();
@@ -438,8 +446,7 @@ require 'db_connect.php';
                 overlaySub.textContent = 'Please complete your payment in the popup window.';
 
                 const checkoutResult = await cashfree.checkout({
-                    paymentSessionId: data.payment_session_id,
-                    returnUrl: '<?php echo APP_BASE_URL; ?>/payment_return.php?order_id={order_id}',
+                    paymentSessionId: data.payment_session_id
                 });
 
                 if (checkoutResult && checkoutResult.error) {
@@ -459,7 +466,7 @@ require 'db_connect.php';
                 hideOverlay();
                 submitBtn.classList.remove('btn-paying');
                 submitBtn.textContent = '🔒 Confirm & Pay ₹<?php echo number_format(CONSULTATION_FEE, 0); ?>';
-                showError('Network error. Please check your connection and try again.');
+                showError('Error: ' + err.message);
                 console.error('Payment error:', err);
             }
         });
