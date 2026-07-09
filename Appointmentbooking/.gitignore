@@ -1,0 +1,23 @@
+# ── Sensitive credentials — NEVER commit these ───────────────
+.env
+.env.local
+.env.production
+.env.staging
+
+# ── Allow the example template (no real secrets) ─────────────
+!.env.example
+
+# ── Migration scripts (delete after running) ─────────────────
+migrate_payment.php
+
+# ── OS & editor junk ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+logs/

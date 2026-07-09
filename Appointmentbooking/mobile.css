@@ -111,11 +111,39 @@
         background: #EBF3FC;
     }
 
-    /* Logout button on mobile nav */
-    .btn-logout {
-        margin: 8px 16px;
+    /* ── Logout button on mobile nav ─────────────────────── */
+    .nav-links .btn-logout {
+        display: block;
         width: calc(100% - 32px);
-        justify-content: center;
+        margin: 6px 16px 10px;
+        padding: 12px 16px;
+        text-align: center;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        border-radius: 10px;
+        background: #fff1f2;
+        color: #be123c !important;
+        border: 1.5px solid #fda4af;
+        box-sizing: border-box;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .nav-links .btn-logout:hover,
+    .nav-links .btn-logout:active {
+        background: #ffe4e6;
+        color: #9f1239 !important;
+        border-color: #fb7185;
+    }
+
+    [data-theme="dark"] .nav-links .btn-logout {
+        background: rgba(239, 68, 68, 0.12);
+        color: #fca5a5 !important;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    [data-theme="dark"] .nav-links .btn-logout:hover {
+        background: rgba(239, 68, 68, 0.22);
+        color: #f87171 !important;
     }
 
     /* ── Modals — bottom sheet style ── */

@@ -5,64 +5,13 @@ if(!isset($_SESSION['user_id'])) {
     exit();
 }
 require 'db_connect.php';
+require 'config.php';
 
 date_default_timezone_set('Asia/Kolkata');
 
-$error = '';
-$success = '';
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $date        = $conn->real_escape_string($_POST['date']);
-    $time        = $conn->real_escape_string($_POST['time']);
-    $patient_name = $conn->real_escape_string($_POST['patient_name']);
-    $details     = $conn->real_escape_string($_POST['details']);
-    $doctor_id   = isset($_POST['doctor_id']) ? (int)$_POST['doctor_id'] : 0;
-    $user_id     = $_SESSION['user_id'];
-
-    if(empty($date) || empty($time) || empty($patient_name) || empty($doctor_id)) {
-        $error = "Name, date, time, and doctor selection are required!";
-    } else {
-
-        // ── Date / time validation ──────────────────────────────────────
-        $today    = date('Y-m-d');
-        $now      = new DateTime('now');                  // current local time
-        $cutoff   = clone $now;
-        $cutoff->modify('+30 minutes');                   // must be ≥ now + 30 min
-
-        // Reject past dates
-        if ($date < $today) {
-            $error = "You cannot book an appointment for a past date.";
-        } else {
-            // For today: reject slots that are within 30 minutes of now
-            $apptDatetime = new DateTime("$date $time");
-            if ($apptDatetime < $cutoff) {
-                // Calculate how many minutes away the slot is for a helpful message
-                $diff = $now->diff($apptDatetime);
-                if ($apptDatetime <= $now) {
-                    $error = "That time slot has already passed. Please choose a future time.";
-                } else {
-                    $mins = $diff->h * 60 + $diff->i;
-                    $error = "Please book at least 30 minutes in advance. This slot is only ~{$mins} minute(s) away.";
-                }
-            } else {
-                // ── Conflict check ──────────────────────────────────────
-                $check = $conn->query("SELECT * FROM bookings WHERE date='$date' AND time='$time' AND doctor_id='$doctor_id'");
-                if ($check->num_rows > 0) {
-                    $error = "This time slot is already booked for the selected doctor! Please choose another time or doctor.";
-                } else {
-                    $booking_id = 'CP-' . strtoupper(substr(uniqid(), -6));
-                    $sql = "INSERT INTO bookings (user_id, doctor_id, booking_id, patient_name, date, time, details) VALUES ('$user_id', '$doctor_id', '$booking_id', '$patient_name', '$date', '$time', '$details')";
-                    if ($conn->query($sql) === TRUE) {
-                        $success = "Appointment Booked Successfully! Your Booking ID is <strong>$booking_id</strong>. View your <a href='appointments.php'>appointments here</a>.";
-                    } else {
-                        $error = "Error: " . $conn->error;
-                    }
-                }
-            }
-        }
-        // ────────────────────────────────────────────────────────────────
-    }
-}
+// book.php now only renders the form.
+// All booking logic is handled by initiate_payment.php (AJAX)
+// and payment_return.php (post-payment confirmation).
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -72,13 +21,131 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Book Appointment — CarePlus</title>
     <link rel="stylesheet" type="text/css" href="style.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" type="text/css" media="screen and (max-width:768px)" href="mobile.css?v=<?php echo time(); ?>">
+    <!-- Cashfree Payment Gateway JS SDK -->
+    <script src="<?php echo CF_JS_SDK; ?>"></script>
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.setAttribute('data-theme', 'dark');
         }
     </script>
+    <style>
+        /* ── Payment loading overlay ───────────────────────────── */
+        .payment-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .payment-overlay.active {
+            display: flex;
+        }
+        .payment-spinner {
+            width: 52px;
+            height: 52px;
+            border: 4px solid rgba(255,255,255,0.25);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .payment-overlay-text {
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+        .payment-overlay-sub {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.8rem;
+        }
+
+        /* ── Fee badge shown next to submit button ─────────────── */
+        .fee-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 1px solid rgba(0,113,227,0.2);
+            border-radius: 10px;
+            margin-top: 12px;
+            margin-bottom: 4px;
+        }
+        .fee-info .fee-icon { font-size: 1.2rem; }
+        .fee-info .fee-text {
+            flex: 1;
+            font-size: 0.85rem;
+            color: #1e40af;
+            font-weight: 500;
+        }
+        .fee-info .fee-amount {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #0071E3;
+        }
+
+        /* ── Client-side error banner ───────────────────────────── */
+        #js-error {
+            display: none;
+            padding: 12px 16px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            color: #b91c1c;
+            font-size: 0.875rem;
+            margin-bottom: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── Cashfree mode badge ────────────────────────────────── */
+        .cf-mode-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 5px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .cf-mode-badge.sandbox {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+        .cf-mode-badge.production {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        /* ── Button loading state ───────────────────────────────── */
+        .btn-paying {
+            opacity: 0.75;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body class="app-page">
+
+    <!-- Payment loading overlay -->
+    <div class="payment-overlay" id="paymentOverlay">
+        <div class="payment-spinner"></div>
+        <div class="payment-overlay-text" id="overlayText">Processing Payment…</div>
+        <div class="payment-overlay-sub" id="overlaySub">Please wait, do not close this window.</div>
+    </div>
 
     <nav class="navbar glass-nav">
         <div class="container nav-content">
@@ -97,16 +164,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <div class="container mt-4 center-content no-height">
         <div class="card glass">
-            <h2>Book an Appointment</h2>
+            <h2>
+                Book an Appointment
+                <span class="cf-mode-badge <?php echo CF_ENV; ?>">
+                    <?php echo CF_ENV === 'sandbox' ? '🧪 Test Mode' : '🔒 Live'; ?>
+                </span>
+            </h2>
 
-            <?php if($error) echo "<div class='alert error'>$error</div>"; ?>
-            <?php if($success) echo "<div class='alert success'>$success</div>"; ?>
+            <!-- JS-driven error display -->
+            <div id="js-error"></div>
 
-            <?php if(!$success): ?>
-            <form action="book.php" method="POST" id="bookingForm" novalidate>
+            <form id="bookingForm" novalidate>
                 <div class="form-group">
                     <label>Patient Name:</label>
-                    <input type="text" name="patient_name" value="<?php echo htmlspecialchars($_SESSION['user_name']); ?>" required>
+                    <input type="text" name="patient_name" id="patient_name"
+                           value="<?php echo htmlspecialchars($_SESSION['user_name']); ?>" required>
                 </div>
 
                 <?php
@@ -147,8 +219,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="form-group">
                     <label>Appointment Date:</label>
                     <input type="date" name="date" id="appt-date" required
-                           min="<?php echo date('Y-m-d'); ?>"
-                           value="<?php echo isset($_POST['date']) ? htmlspecialchars($_POST['date']) : ''; ?>">
+                           min="<?php echo date('Y-m-d'); ?>">
                 </div>
 
                 <div class="form-group">
@@ -171,21 +242,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 <div class="form-group">
                     <label>Additional Details (Optional):</label>
-                    <textarea name="details" rows="3" placeholder="Any specific requirements..."></textarea>
+                    <textarea name="details" id="details" rows="3" placeholder="Any specific requirements…"></textarea>
                 </div>
 
-                <button type="submit" class="btn primary-btn mt-2 block-btn">Confirm Booking</button>
+                <!-- Consultation fee info -->
+                <div class="fee-info">
+                    <span class="fee-icon">💳</span>
+                    <span class="fee-text">Consultation fee payable via Cashfree (UPI, Cards, Net Banking & more)</span>
+                    <span class="fee-amount">₹<?php echo number_format(CONSULTATION_FEE, 0); ?></span>
+                </div>
+
+                <button type="submit" class="btn primary-btn mt-2 block-btn" id="submitBtn">
+                    🔒 Confirm &amp; Pay ₹<?php echo number_format(CONSULTATION_FEE, 0); ?>
+                </button>
             </form>
-            <?php endif; ?>
         </div>
     </div>
 
     <script>
     (function () {
-        // ── Doctor cascade ──────────────────────────────────────────────
-        const doctors      = <?php echo json_encode($doctors_data); ?>;
-        const specialtyEl  = document.getElementById('specialty');
-        const doctorEl     = document.getElementById('doctor_id');
+        // ── Cashfree SDK init ────────────────────────────────────
+        const cashfree = Cashfree({ mode: '<?php echo CF_ENV; ?>' });
+
+        // ── Doctor cascade ───────────────────────────────────────
+        const doctors     = <?php echo json_encode($doctors_data); ?>;
+        const specialtyEl = document.getElementById('specialty');
+        const doctorEl    = document.getElementById('doctor_id');
 
         specialtyEl.addEventListener('change', function () {
             doctorEl.innerHTML = '<option value="">-- Select Doctor --</option>';
@@ -204,12 +286,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         });
 
-        // ── Date / time validation (UX layer) ──────────────────────────
-        const dateEl    = document.getElementById('appt-date');
-        const timeEl    = document.getElementById('appt-time');
-        const timeHint  = document.getElementById('time-hint');
+        // ── Date / time validation (UX layer) ───────────────────
+        const dateEl   = document.getElementById('appt-date');
+        const timeEl   = document.getElementById('appt-time');
+        const timeHint = document.getElementById('time-hint');
 
-        // All available slots as { value, label } pairs (HH:MM:SS → HH:MM for comparison)
         const slots = [
             { value: '09:00:00', label: '09:00 AM', hhmm: '09:00' },
             { value: '10:00:00', label: '10:00 AM', hhmm: '10:00' },
@@ -224,24 +305,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             const selectedDate = dateEl.value;
             const todayStr = new Date().toISOString().split('T')[0];
             const isToday  = (selectedDate === todayStr);
+            const now      = new Date();
+            const cutoff   = new Date(now.getTime() + 30 * 60 * 1000);
+            const prevVal  = timeEl.value;
 
-            // Current time + 30-minute buffer
-            const now    = new Date();
-            const cutoff = new Date(now.getTime() + 30 * 60 * 1000);
-
-            // Save currently selected value so we can restore it if still valid
-            const prevVal = timeEl.value;
-
-            // Rebuild options
             timeEl.innerHTML = '<option value="">-- Select Time --</option>';
 
             slots.forEach(slot => {
                 const [slotH, slotM] = slot.hhmm.split(':').map(Number);
-                
-                // Construct a date object for this slot today
                 const slotDate = new Date();
                 slotDate.setHours(slotH, slotM, 0, 0);
-
                 const isPast = isToday && (slotDate < cutoff);
 
                 const opt = document.createElement('option');
@@ -259,51 +332,126 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 timeEl.appendChild(opt);
             });
 
-            // Show hint only when today is selected
             timeHint.style.display = isToday ? 'block' : 'none';
 
-            // If the previously selected slot is now disabled, reset to placeholder
             if (prevVal) {
                 const stillValid = [...timeEl.options].some(o => o.value === prevVal && !o.disabled);
                 if (!stillValid) timeEl.value = '';
             }
         }
 
-        // Re-filter whenever the date changes
         dateEl.addEventListener('change', filterSlots);
-
-        // Also run on page load if a date is already pre-filled (e.g. back from error)
         if (dateEl.value) filterSlots();
 
-        // Client-side guard before submit
-        document.getElementById('bookingForm').addEventListener('submit', function (e) {
-            const selectedDate = dateEl.value;
-            const selectedTime = timeEl.value;
+        // ── Error display helper ─────────────────────────────────
+        const errorBox = document.getElementById('js-error');
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.style.display = 'block';
+            errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        function clearError() {
+            errorBox.style.display = 'none';
+            errorBox.textContent = '';
+        }
 
-            if (!selectedDate || !selectedTime) return; // let server handle empty fields
+        // ── Overlay helpers ──────────────────────────────────────
+        const overlay    = document.getElementById('paymentOverlay');
+        const overlayTxt = document.getElementById('overlayText');
+        const overlaySub = document.getElementById('overlaySub');
+
+        function showOverlay(text, sub) {
+            overlayTxt.textContent = text || 'Processing Payment…';
+            overlaySub.textContent = sub  || 'Please wait, do not close this window.';
+            overlay.classList.add('active');
+        }
+        function hideOverlay() {
+            overlay.classList.remove('active');
+        }
+
+        // ── Main form submit handler ─────────────────────────────
+        document.getElementById('bookingForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            clearError();
+
+            // ─ Client-side validation ─────────────────────────
+            const patient = document.getElementById('patient_name').value.trim();
+            const date    = dateEl.value;
+            const time    = timeEl.value;
+            const doctor  = doctorEl.value;
+
+            if (!patient) { showError('Please enter the patient name.'); return; }
+            if (!doctor)  { showError('Please select a specialty and doctor.'); return; }
+            if (!date)    { showError('Please select an appointment date.'); return; }
+            if (!time)    { showError('Please select a time slot.'); return; }
 
             const todayStr = new Date().toISOString().split('T')[0];
+            if (date < todayStr) { showError('You cannot book an appointment for a past date.'); return; }
 
-            // Block past dates
-            if (selectedDate < todayStr) {
-                e.preventDefault();
-                alert('You cannot book an appointment for a past date.');
-                return;
-            }
-
-            // Block slots within 30 minutes for today
-            if (selectedDate === todayStr) {
-                const [h, m] = selectedTime.split(':').map(Number);
+            if (date === todayStr) {
+                const [h, m] = time.split(':').map(Number);
                 const now    = new Date();
                 const cutoff = new Date(now.getTime() + 30 * 60 * 1000);
-                const appt   = new Date();
-                appt.setHours(h, m, 0, 0);
-
+                const appt   = new Date(); appt.setHours(h, m, 0, 0);
                 if (appt < cutoff) {
-                    e.preventDefault();
-                    alert('Please book at least 30 minutes in advance.');
+                    showError('Please book at least 30 minutes in advance.');
                     return;
                 }
+            }
+
+            // ─ Lock button & show overlay ──────────────────────
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.classList.add('btn-paying');
+            submitBtn.textContent = '⏳ Initiating Payment…';
+            showOverlay('Preparing your order…', 'Connecting to payment gateway…');
+
+            // ─ Collect form data ───────────────────────────────
+            const formData = new FormData(this);
+
+            try {
+                // ─ Call initiate_payment.php (server-side order creation) ─
+                const res  = await fetch('initiate_payment.php', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await res.json();
+
+                if (!data.success) {
+                    hideOverlay();
+                    submitBtn.classList.remove('btn-paying');
+                    submitBtn.textContent = '🔒 Confirm & Pay ₹<?php echo number_format(CONSULTATION_FEE, 0); ?>';
+                    showError(data.error || 'An unexpected error occurred. Please try again.');
+                    return;
+                }
+
+                // ─ Open Cashfree payment modal ─────────────────
+                overlayTxt.textContent = 'Opening Payment Gateway…';
+                overlaySub.textContent = 'Please complete your payment in the popup window.';
+
+                const checkoutResult = await cashfree.checkout({
+                    paymentSessionId: data.payment_session_id,
+                    returnUrl: '<?php echo APP_BASE_URL; ?>/payment_return.php?order_id={order_id}',
+                });
+
+                if (checkoutResult && checkoutResult.error) {
+                    hideOverlay();
+                    submitBtn.classList.remove('btn-paying');
+                    submitBtn.textContent = '🔒 Confirm & Pay ₹<?php echo number_format(CONSULTATION_FEE, 0); ?>';
+                    const errCode = checkoutResult.error.code || '';
+                    const errMsg  = checkoutResult.error.message || 'Payment failed or was cancelled.';
+                    showError(errCode === 'PAYMENT_CLOSED' ? 'Payment window was closed. You have not been charged. Please try again.' : errMsg);
+                    return;
+                }
+
+                // Payment completed — redirect handled by returnUrl
+                showOverlay('Verifying Payment…', 'Almost there! Confirming your booking…');
+
+            } catch (err) {
+                hideOverlay();
+                submitBtn.classList.remove('btn-paying');
+                submitBtn.textContent = '🔒 Confirm & Pay ₹<?php echo number_format(CONSULTATION_FEE, 0); ?>';
+                showError('Network error. Please check your connection and try again.');
+                console.error('Payment error:', err);
             }
         });
     })();

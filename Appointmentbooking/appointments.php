@@ -91,6 +91,7 @@ $result = $conn->query($sql);
                                 <th>Doctor</th>
                                 <th>Details</th>
                                 <th>Status</th>
+                                <th>Payment</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -115,6 +116,19 @@ $result = $conn->query($sql);
                                             echo '<span class="badge" style="background-color: #e5e7eb; color: #4b5563;">Completed</span>';
                                         } else {
                                             echo '<span class="badge success-badge">Upcoming</span>';
+                                        }
+                                        ?>
+                                    </td>
+
+                                    <td>
+                                        <?php
+                                        $pmtStatus = $row['payment_status'] ?? 'paid'; // 'paid','pending','failed'
+                                        if ($pmtStatus === 'paid') {
+                                            echo '<span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;">✅ Paid</span>';
+                                        } elseif ($pmtStatus === 'pending') {
+                                            echo '<span class="badge" style="background:#fef9c3;color:#92400e;border:1px solid #fde68a;">⏳ Pending</span>';
+                                        } else {
+                                            echo '<span class="badge" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;">❌ Failed</span>';
                                         }
                                         ?>
                                     </td>

@@ -52,11 +52,14 @@ CREATE TABLE bookings (
     user_id INT NOT NULL,
     doctor_id INT NOT NULL,
     booking_id VARCHAR(20) NOT NULL UNIQUE,
+    cf_order_id VARCHAR(80) DEFAULT NULL,
+    payment_status ENUM('pending','paid','failed') NOT NULL DEFAULT 'pending',
     patient_name VARCHAR(100) NOT NULL,
     date DATE NOT NULL,
     time TIME NOT NULL,
     details TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_cf_order_id (cf_order_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE
 );
