@@ -1,4 +1,6 @@
 <?php
+ini_set('session.gc_maxlifetime', 2592000);
+session_set_cookie_params(2592000);
 session_start();
 require_once 'db_connect.php'; // Ensure this points to your actual database connection file
 
