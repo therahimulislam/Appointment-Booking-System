@@ -1,110 +1,67 @@
+/* ================================================================
+   CarePlus — Mobile Responsive Overrides
+   Applies only to screens ≤ 768px via media attribute on <link>
+   ================================================================ */
+
+/* ── Base mobile container ── */
 .container {
-    padding: 0 15px;
-    /* Give the edges a little more breathing room */
+    padding: 0 16px;
 }
 
-.card.glass {
-    padding: 20px 15px;
-    /* Shrink the white space inside cards */
-    margin-top: 15px;
-    border-radius: 8px;
-    /* Slightly sharper corners for mobile */
+/* ── Cards on mobile ── */
+.card,
+.auth-card {
+    padding: 24px 20px;
+    margin-top: 16px;
+    border-radius: 12px;
 }
 
-/* 2. Navigation Bar (Stacking) */
-.nav-content {
-    flex-direction: column;
-    /* Stacks the CarePlus Logo on top of the links */
-    align-items: center;
-    gap: 15px;
-}
-
-.nav-links {
-    display: flex;
-    flex-wrap: wrap;
-    /* Lets the links wrap to a second line if the phone is narrow */
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-}
-
-.nav-links a {
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    /* Shrinks the buttons slightly so they fit */
-}
-
-/* 3. Typography Adjustments */
-h2 {
-    font-size: 1.5rem;
-    text-align: center;
-    /* Center-aligns headers on mobile */
-}
-
-/* 4. Modals (The Cancel Popup) */
-.modal-card {
-    width: 95%;
-    /* Takes up exactly 95% of the phone screen */
-    margin: 10px;
-}
-
-/* 5. Forms (The iOS Zoom Fix) */
+/* ── Anti-zoom: prevents iOS zoom on input focus ── */
 .form-group input,
 .form-group select,
 .form-group textarea {
     font-size: 16px !important;
-    /* CRITICAL: Prevents iPhones from automatically zooming in when you tap a text box */
+    padding: 12px 14px;
 }
 
+/* ── Full-width buttons ── */
+.btn,
 .btn.block-btn {
     width: 100%;
-    /* Ensures buttons stretch all the way across the screen */
+    padding: 13px 20px;
+    font-size: 1rem;
+    justify-content: center;
 }
 
-/* ==========================================
-   Extra small phones (iPhone SE, older Androids) 
-   ========================================== */
-/* ==========================================
-   📱 CAREPLUS PERFECT MOBILE CSS
-   ========================================== */
+/* Exception: keep small buttons compact */
+.btn.btn-sm {
+    width: auto;
+    padding: 6px 12px;
+    font-size: 0.8125rem;
+}
 
-/* 🔥 THE FIREWALL: ONLY applies to screens smaller than 768px 🔥 */
+/* ================================================================
+   MAIN MEDIA QUERY — max-width: 768px
+   ================================================================ */
 @media (max-width: 768px) {
 
-    /* 1. Spacing & Typography */
-    .container {
-        padding: 0 15px;
-    }
-
-    .hero-section {
-        padding: 40px 15px 10px;
-    }
-
+    /* ── Typography ── */
     h2 {
-        font-size: 1.3rem;
-        text-align: center;
+        font-size: 1.375rem;
     }
 
-    .section-header h2 {
-        font-size: 1.8rem;
+    .section-header h2,
+    .section-title {
+        font-size: 1.75rem;
     }
 
-    /* 2. FIX: Expand Tiny Login/Signup Cards */
-    .card {
-        width: 100% !important;
-        /* Forces forms to stretch edge-to-edge */
-        max-width: 100% !important;
-        padding: 30px 20px;
-        margin-top: 15px;
-        box-sizing: border-box;
-    }
+    /* ── Navigation ── */
 
-    /* 3. Show the Hamburger Button */
+    /* Show hamburger, hide links by default */
     .mobile-menu-btn {
         display: block !important;
     }
 
-    /* 4. Navbar Layout */
     .nav-content {
         display: flex;
         flex-direction: row;
@@ -113,20 +70,20 @@ h2 {
         width: 100%;
     }
 
-    /* 5. The Hidden Dropdown Menu */
+    /* Dropdown nav on mobile */
     .nav-links {
         display: none;
         flex-direction: column;
         position: absolute;
-        top: 70px;
+        top: 60px;
         left: 0;
-        width: 100%;
-        background: white;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        padding: 0;
-        z-index: 100;
-        border-bottom-left-radius: 12px;
-        border-bottom-right-radius: 12px;
+        right: 0;
+        background: #FFFFFF;
+        border-bottom: 1px solid #E5E5E7;
+        padding: 8px 0;
+        z-index: 99;
+        gap: 0;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
 
     .nav-links.active {
@@ -134,80 +91,35 @@ h2 {
     }
 
     .nav-links a {
-        padding: 15px 20px;
+        padding: 13px 20px;
         text-align: left;
-        border-bottom: 1px solid #f1f5f9;
+        border-radius: 0;
+        border-bottom: 1px solid #F0F0F2;
         width: 100%;
-        color: #0f172a !important;
+        color: #1D1D1F !important;
+        font-size: 0.9375rem;
         display: block;
-    }
-
-    /* 6. Anti-Zoom Inputs (The iOS Trick) */
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-        font-size: 16px !important;
-        padding: 12px;
-    }
-
-    /* 7. Big Thumb-Friendly Buttons */
-    .btn,
-    .btn.block-btn {
-        width: 100%;
-        padding: 14px 20px;
-        font-size: 1rem;
-    }
-
-    /* 8. FIX: Eliminate Horizontal Scrolling (Mobile Table Cards) */
-    .table-container {
-        border: none;
         background: transparent;
-        padding: 0;
     }
 
-    /* Force the table to behave like standard stacked blocks */
-    table,
-    thead,
-    tbody,
-    th,
-    td,
-    tr {
-        display: block;
-        width: 100%;
-    }
-
-    thead tr {
-        display: none;
-        /* Hides the top headers on mobile */
-    }
-
-    tr {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
-        padding: 5px;
-    }
-
-    td {
-        border: none;
-        border-bottom: 1px solid #f8fafc;
-        padding: 12px 15px;
-        text-align: left;
-        font-size: 0.95rem;
-    }
-
-    /* Centers the 3-dots/action button at the bottom of each card */
-    td:last-child {
+    .nav-links a:last-child {
         border-bottom: none;
-        display: flex;
-        justify-content: center;
-        padding-top: 15px;
     }
 
-    /* 9. Bottom-Sheet Modals */
-    .modal {
+    .nav-links a.active {
+        color: #0071E3 !important;
+        background: #EBF3FC;
+    }
+
+    /* Logout button on mobile nav */
+    .btn-logout {
+        margin: 8px 16px;
+        width: calc(100% - 32px);
+        justify-content: center;
+    }
+
+    /* ── Modals — bottom sheet style ── */
+    .modal-overlay {
         align-items: flex-end;
         padding-bottom: 0;
     }
@@ -218,33 +130,109 @@ h2 {
         margin: 0;
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
-        border-top-left-radius: 24px;
-        border-top-right-radius: 24px;
-        padding: 30px 20px 40px;
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
     }
 
-    .modal-actions {
+    /* ── Grid stacking ── */
+    .grid-2,
+    .grid-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .about-grid {
+        grid-template-columns: 1fr;
+        gap: 36px;
+    }
+
+    .about-stats-panel {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+        min-height: auto;
+        padding: 48px 0;
+    }
+
+    .glass-card-large {
+        padding: 36px 20px;
+        border-radius: 12px;
+    }
+
+    .hero-title {
+        font-size: 2rem;
+        letter-spacing: -0.03em;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .hero-stats {
+        gap: 20px;
+        padding-top: 20px;
+    }
+
+    .hero-stat strong {
+        font-size: 1.25rem;
+    }
+
+    .button-group {
         flex-direction: column;
         gap: 10px;
     }
 
-    /* TARGETED FIX: Break the flexbox vice grip on the login/signup page */
-    body.center-content {
-        padding: 20px !important;
-        display: flex !important;
-        align-items: center !important;
-        /* Keeps it vertically centered */
-        justify-content: center !important;
+    .button-group .btn {
+        width: 100%;
     }
 
-    body.center-content .card.glass {
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 100% !important;
-        margin: 0 !important;
-        box-sizing: border-box !important;
+    /* ── Section padding ── */
+    .section-padding {
+        padding: 56px 0;
     }
 
-}
+    /* ── Doctor contacts layout ── */
+    .doctor-contact {
+        font-size: 0.75rem;
+    }
 
-/* <-- END OF THE FIREWALL */
+    /* ── Footer ── */
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-bottom-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 4px;
+    }
+
+    /* ── Stat cards ── */
+    .stat-card-professional {
+        padding: 18px;
+    }
+
+    /* ── Profile page ── */
+    .center-content.no-height {
+        padding: 20px 16px;
+    }
+
+    /* ── Dashboard header ── */
+    .dashboard-header .flex-align {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+    }
+
+} /* ── END @media 768px ── */
