@@ -201,36 +201,111 @@ $result = $conn->query($sql);
     </div>
     <script>
         // ==========================================
-        // 1. EXPORT ENTIRE TABLE
-        // ==========================================
-         function downloadPDF() {
-             const element = document.getElementById('appointmentData');
-             if (!element) return alert("Error: Table ID missing.");
-             
-             // Add printing class to hide action column and format layout
-             element.classList.add('pdf-printing');
+            // 1. EXPORT ALL APPOINTMENTS (BEAUTIFUL LIST)
+            // ==========================================
+            function downloadPDF() {
+                const table = document.querySelector('.styled-table');
+                if (!table) return alert("Error: Could not find appointment data.");
 
-             const header = element.querySelector('.pdf-header');
-             if (header) {
-                 header.style.display = 'flex';
-             }
+                const rows = table.querySelectorAll('tbody tr');
+                if (rows.length === 0) return alert("No appointments to export.");
 
-             const opt = {
-                 margin: 12,
-                 filename: 'CarePlus_Appointments_History.pdf',
-                 image: { type: 'jpeg', quality: 0.98 },
-                 html2canvas: { scale: 2 },
-                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-             };
+                // Create an invisible canvas for the PDF
+                const tempDiv = document.createElement('div');
+                tempDiv.style.width = '700px';
+                tempDiv.style.padding = '30px';
+                tempDiv.style.background = '#FFFFFF';
+                tempDiv.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                tempDiv.style.color = '#1D1D1F';
 
-             html2pdf().set(opt).from(element).save().then(() => {
-                 // Restore layout state
-                 element.classList.remove('pdf-printing');
-                 if (header) {
-                     header.style.display = 'none';
-                 }
-             });
-         }
+                const generatedDateStr = new Date().toLocaleDateString('en-US', { 
+                    month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+
+                // 1. Build the PDF Header
+                let htmlContent = `
+                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #0071E3; padding-bottom: 20px;">
+                        <h1 style="margin: 0; color: #1D1D1F; font-size: 26px; font-weight: 700; letter-spacing: -0.02em;">CarePlus Medical Center</h1>
+                        <p style="margin: 6px 0 0 0; color: #6E6E73; font-size: 14px; font-weight: 500;">Complete Appointment History Report</p>
+                        <p style="margin: 4px 0 0 0; color: #A1A1A6; font-size: 12px;">Generated on: ${generatedDateStr}</p>
+                    </div>
+                `;
+
+                // 2. Loop through every row in your HTML table and create a Ticket Card
+                rows.forEach((row) => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length < 8) return; // Skip broken rows
+
+                    // Extract data directly from the table columns
+                    const bookingId = cells[0].innerText.trim();
+                    const date      = cells[1].innerText.trim();
+                    const time      = cells[2].innerText.trim();
+                    const patient   = cells[3].innerText.trim();
+                    const doctorFull= cells[4].innerText.trim(); // e.g., "Dr. Elena Rostova (Neurologist)"
+                    const status    = cells[6].innerText.trim();
+                    const payment   = cells[7].innerText.trim(); 
+
+                    // Split doctor name and specialty beautifully
+                    let doctorName = doctorFull;
+                    let specialty = "";
+                    if (doctorFull.includes('(')) {
+                        doctorName = doctorFull.split('(')[0].trim();
+                        specialty = doctorFull.split('(')[1].replace(')', '').trim();
+                    }
+
+                    const paymentColor = payment.toLowerCase().includes('paid') ? '#15803d' : '#b91c1c';
+                    const paymentBg    = payment.toLowerCase().includes('paid') ? '#dcfce3' : '#fee2e2';
+
+                    // Add the Ticket Card HTML
+                    htmlContent += `
+                        <div style="border: 1px solid #E5E5E7; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); page-break-inside: avoid; background: #FAFAFA;">
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E5E7; padding-bottom: 12px; margin-bottom: 16px;">
+                                <div style="font-weight: 700; color: #0071E3; font-size: 15px;">Booking ID: ${bookingId}</div>
+                                <div style="font-size: 12px; font-weight: 600; color: ${paymentColor}; background: ${paymentBg}; padding: 4px 10px; border-radius: 6px;">Payment: ${payment}</div>
+                            </div>
+                            
+                            <div style="display: flex; width: 100%;">
+                                <div style="width: 50%;">
+                                    <div style="margin-bottom: 14px;">
+                                        <div style="font-size: 10px; color: #6E6E73; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 3px;">Patient Name</div>
+                                        <div style="font-size: 14px; font-weight: 600; color: #1D1D1F;">${patient}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 10px; color: #6E6E73; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 3px;">Date & Time</div>
+                                        <div style="font-size: 14px; font-weight: 500; color: #1D1D1F;">${date} at ${time}</div>
+                                    </div>
+                                </div>
+                                
+                                <div style="width: 50%;">
+                                    <div style="margin-bottom: 14px;">
+                                        <div style="font-size: 10px; color: #6E6E73; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 3px;">Doctor</div>
+                                        <div style="font-size: 14px; font-weight: 600; color: #1D1D1F;">${doctorName}</div>
+                                        <div style="font-size: 12px; color: #6E6E73; margin-top: 2px;">${specialty}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 10px; color: #6E6E73; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 3px;">Status</div>
+                                        <div style="font-size: 12px; font-weight: 600; display: inline-block; padding: 4px 10px; background: #FFFFFF; border: 1px solid #E5E5E7; border-radius: 6px; color: #1D1D1F;">${status}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                tempDiv.innerHTML = htmlContent;
+
+                // 3. Generate the PDF
+                const opt = {
+                    margin: [15, 15, 15, 15],
+                    filename: 'CarePlus_Full_History.pdf',
+                    image: { type: 'jpeg', quality: 0.99 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } // Changed to Portrait for better card stacking
+                };
+                
+                html2pdf().set(opt).from(tempDiv).save();
+            }
 
         // ==========================================
         // 2. TOGGLE 3-DOTS DROPDOWN
