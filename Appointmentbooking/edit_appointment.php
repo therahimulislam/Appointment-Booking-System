@@ -1,37 +1,50 @@
 <?php
+// Keep user logged in for 30 days
 ini_set('session.gc_maxlifetime', 2592000);
 session_set_cookie_params(2592000);
 session_start();
-require_once 'db_connect.php'; // Ensure this points to your actual database connection file
 
-// Kick out unauthenticated users
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
-
-
+require 'db_connect.php';
 
 $error   = '';
 $success = '';
 $appointment = null;
+$user_id = (int)$_SESSION['user_id'];
 
 // 1. Fetch the existing appointment data
 if (isset($_GET['id'])) {
-    $stmt = $pdo->prepare("SELECT * FROM appointments WHERE id = ? AND user_id = ?");
-    $stmt->execute([$_GET['id'], $_SESSION['user_id']]);
-    $appointment = $stmt->fetch();
-
-    if (!$appointment) {
+    $booking_id = (int)$_GET['id'];
+    $stmt = $conn->prepare("SELECT b.*, d.name AS doctor_name, d.specialty FROM bookings b LEFT JOIN doctors d ON b.doctor_id = d.id WHERE b.id = ? AND b.user_id = ?");
+    $stmt->bind_param("ii", $booking_id, $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $appointment = $result->fetch_assoc();
+    } else {
         die("Error: Appointment not found or you don't have permission to edit it.");
-// 1. Handle Form Submission (When user clicks Save)
+    }
+} elseif (isset($_POST['booking_id'])) {
+    $booking_id = (int)$_POST['booking_id'];
+} else {
+    header("Location: appointments.php");
+    exit();
+}
+
+// 2. Handle Form Submission (When user clicks Save)
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $booking_id = (int) $_POST['booking_id'];
     $date       = $conn->real_escape_string($_POST['date']);
     $time       = $conn->real_escape_string($_POST['time']);
     $details    = $conn->real_escape_string($_POST['details']);
 
-    // ── Date / time validation ────────────────────────────────────────
+    // Fetch original doctor_id from the hidden input
+    $doctor_id  = isset($_POST['doctor_id']) ? (int)$_POST['doctor_id'] : 0;
+
+    // ── Date / time validation ──
     $today  = date('Y-m-d');
     $now    = new DateTime('now');
     $cutoff = clone $now;
@@ -42,65 +55,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $apptDatetime = new DateTime("$date $time");
         if ($apptDatetime < $cutoff) {
-            if ($apptDatetime <= $now) {
-                $error = "That time slot has already passed. Please choose a future time.";
-            } else {
-                $diff = $now->diff($apptDatetime);
-                $mins = $diff->h * 60 + $diff->i;
-                $error = "Please reschedule at least 30 minutes in advance. This slot is only ~{$mins} minute(s) away.";
-            }
+            $error = "Please reschedule at least 30 minutes in advance.";
         }
     }
-    // ─────────────────────────────────────────────────────────────────
 
-    if (!$error) {
-        // Fetch the doctor_id to check for conflicts
-        $doc_query = $conn->query("SELECT doctor_id FROM bookings WHERE id='$booking_id' AND user_id='$user_id'");
+    // ── Conflict Check & Update ──
+    if (!$error && $doctor_id > 0) {
+        // Make sure we only check for conflicts against valid (non-failed) payments
+        $conflict_check = $conn->query("SELECT id FROM bookings WHERE date='$date' AND time='$time' AND doctor_id='$doctor_id' AND id != '$booking_id' AND payment_status != 'failed'");
 
-        if ($doc_query->num_rows > 0) {
-            $doctor_id = $doc_query->fetch_assoc()['doctor_id'];
-
-            // Check if the new time slot is already taken by someone else
-            $conflict_check = $conn->query("SELECT id FROM bookings WHERE date='$date' AND time='$time' AND doctor_id='$doctor_id' AND id != '$booking_id'");
-
-            if ($conflict_check->num_rows > 0) {
-                $error = "This time slot is already booked! Please choose another time.";
-            } else {
-                // Update the booking
-                $update_sql = "UPDATE bookings SET date='$date', time='$time', details='$details' WHERE id='$booking_id'";
-                if ($conn->query($update_sql) === TRUE) {
-                    $success = "Appointment updated successfully! <a href='appointments.php'>Return to My Appointments</a>.";
-                } else {
-                    $error = "Error updating appointment: " . $conn->error;
-                }
-            }
+        if ($conflict_check && $conflict_check->num_rows > 0) {
+            $error = "This time slot is already booked! Please choose another time.";
         } else {
-            $error = "Unauthorized action.";
+            $update_sql = "UPDATE bookings SET date='$date', time='$time', details='$details' WHERE id='$booking_id' AND user_id='$user_id'";
+            if ($conn->query($update_sql) === TRUE) {
+                $success = "Appointment updated successfully! <a href='appointments.php' style='color:#15803d; text-decoration:underline;'>Return to My Appointments</a>.";
+                
+                // Refresh local data to show new times on the page immediately
+                $appointment['date'] = $date;
+                $appointment['time'] = $time;
+                $appointment['details'] = $details;
+            } else {
+                $error = "Error updating appointment: " . $conn->error;
+            }
         }
-    }
-}
-
-// 2. Handle the Form Submission (Updating the database)
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $new_date = trim($_POST['date']);
-    $new_time = trim($_POST['time']);
-    $new_doctor = trim($_POST['doctor_name']);
-    $new_details = trim($_POST['details']);
-    $appointment_id = $_POST['appointment_id'];
-
-    try {
-        $update_stmt = $pdo->prepare("UPDATE appointments SET date = ?, time = ?, doctor_name = ?, details = ? WHERE id = ? AND user_id = ?");
-        $update_stmt->execute([$new_date, $new_time, $new_doctor, $new_details, $appointment_id, $_SESSION['user_id']]);
-        
-        $success = "Appointment successfully updated!";
-        
-        // Refresh the variable with the new data
-        $stmt = $pdo->prepare("SELECT * FROM appointments WHERE id = ?");
-        $stmt->execute([$appointment_id]);
-        $appointment = $stmt->fetch();
-        
-    } catch (PDOException $e) {
-        $error = "Failed to update appointment. Please try again.";
+    } elseif (!$error) {
+        $error = "Missing doctor information. Cannot reschedule.";
     }
 }
 ?>
@@ -112,8 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Appointment — CarePlus</title>
     <link rel="stylesheet" type="text/css" href="style.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" type="text/css" media="screen and (max-width:768px)"
-        href="mobile.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" type="text/css" media="screen and (max-width:768px)" href="mobile.css?v=<?php echo time(); ?>">
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.setAttribute('data-theme', 'dark');
@@ -134,86 +113,55 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
 
         <?php if ($appointment): ?>
-        <form action="edit_appointment.php?id=<?php echo $appointment['id']; ?>" method="POST">
-            <input type="hidden" name="appointment_id" value="<?php echo $appointment['id']; ?>">
-
-            <div class="form-group">
-                <label>Doctor:</label>
-                <select name="doctor_name" required>
-                    <option value="Dr. Smith" <?php if($appointment['doctor_name'] == 'Dr. Smith') echo 'selected'; ?>>Dr. Smith (Cardiology)</option>
-                    <option value="Dr. Johnson" <?php if($appointment['doctor_name'] == 'Dr. Johnson') echo 'selected'; ?>>Dr. Johnson (Pediatrics)</option>
-                    <option value="Dr. Williams" <?php if($appointment['doctor_name'] == 'Dr. Williams') echo 'selected'; ?>>Dr. Williams (General)</option>
-                </select>
+            <div class="info-row mb-4" style="background: var(--bg-secondary); padding: 14px; border-radius: 8px; border: 1px solid var(--border);">
+                <p class="text-sm text-muted mb-2"><strong>Booking ID:</strong> <?php echo htmlspecialchars($appointment['cf_order_id'] ?? $appointment['booking_id']); ?></p>
+                <p class="text-sm text-muted mb-2"><strong>Patient:</strong> <?php echo htmlspecialchars($appointment['patient_name']); ?></p>
+                <p class="text-sm text-muted"><strong>Doctor:</strong> Dr. <?php echo htmlspecialchars($appointment['doctor_name']); ?> (<?php echo htmlspecialchars($appointment['specialty']); ?>)</p>
             </div>
 
-            <div class="form-group">
-                <label>Date:</label>
-                <input type="date" name="date" value="<?php echo $appointment['date']; ?>" min="<?php echo date('Y-m-d'); ?>" required>
-            </div>
+            <form action="edit_appointment.php?id=<?php echo $appointment['id']; ?>" method="POST" id="editForm" novalidate>
+                <input type="hidden" name="booking_id" value="<?php echo $appointment['id']; ?>">
+                <input type="hidden" name="doctor_id" value="<?php echo $appointment['doctor_id']; ?>">
 
-            <div class="form-group">
-                <label>Time:</label>
-                <input type="time" name="time" value="<?php echo $appointment['time']; ?>" required>
-            </div>
-
-            <?php if (!$success && $appointment): ?>
-                <div class="info-row mb-4" style="background: var(--bg-secondary); padding: 14px; border-radius: 8px; border: 1px solid var(--border);">
-                    <p class="text-sm text-muted mb-2"><strong>Booking ID:</strong>
-                        <?php echo htmlspecialchars($appointment['id']); ?></p>
-                    <p class="text-sm text-muted mb-2"><strong>Patient:</strong>
-                        <?php echo htmlspecialchars($appointment['patient_name']); ?></p>
-                    <p class="text-sm text-muted"><strong>Doctor:</strong> Dr.
-                        <?php echo htmlspecialchars($appointment['doctor_name']); ?>
-                        (<?php echo htmlspecialchars($appointment['specialty']); ?>)</p>
+                <div class="form-group">
+                    <label>Reschedule Date:</label>
+                    <input type="date" name="date" id="appt-date" required min="<?php echo date('Y-m-d'); ?>" value="<?php echo htmlspecialchars($appointment['date']); ?>">
                 </div>
 
-                <form action="edit_appointment.php" method="POST" id="editForm" novalidate>
-                    <input type="hidden" name="booking_id" value="<?php echo $appointment['id']; ?>">
+                <div class="form-group">
+                    <label>Reschedule Time:</label>
+                    <?php
+                    $times = [
+                        '09:00:00' => '09:00 AM',
+                        '10:00:00' => '10:00 AM',
+                        '11:00:00' => '11:00 AM',
+                        '12:00:00' => '12:00 PM',
+                        '14:00:00' => '02:00 PM',
+                        '15:00:00' => '03:00 PM',
+                        '16:00:00' => '04:00 PM',
+                    ];
+                    $currentTime = $appointment['time'];
+                    ?>
+                    <select name="time" id="appt-time" required>
+                        <?php foreach ($times as $val => $label):
+                            $selected = ($val == $currentTime) ? 'selected' : '';
+                            echo "<option value='$val' $selected>$label</option>";
+                        endforeach; ?>
+                    </select>
+                    <p id="time-hint" style="display:none; margin-top:6px; font-size:0.8125rem; color:var(--text-secondary);">
+                        Slots within 30 minutes of now are unavailable for today.
+                    </p>
+                </div>
 
-                    <div class="form-group">
-                        <label>Reschedule Date:</label>
-                        <input type="date" name="date" id="appt-date" required
-                               min="<?php echo date('Y-m-d'); ?>"
-                               value="<?php echo isset($_POST['date']) ? $_POST['date'] : $appointment['date']; ?>">
-                    </div>
+                <div class="form-group">
+                    <label>Update Details (Optional):</label>
+                    <textarea name="details" rows="3"><?php echo htmlspecialchars($appointment['details']); ?></textarea>
+                </div>
 
-                    <div class="form-group">
-                        <label>Reschedule Time:</label>
-                        <?php
-                        // Build times array — used by both PHP render and JS slot list
-                        $times = [
-                            '09:00:00' => '09:00 AM',
-                            '10:00:00' => '10:00 AM',
-                            '11:00:00' => '11:00 AM',
-                            '12:00:00' => '12:00 PM',
-                            '14:00:00' => '02:00 PM',
-                            '15:00:00' => '03:00 PM',
-                            '16:00:00' => '04:00 PM',
-                        ];
-                        $currentTime = isset($_POST['time']) ? $_POST['time'] : $appointment['time'];
-                        ?>
-                        <select name="time" id="appt-time" required>
-                            <?php foreach ($times as $val => $label):
-                                $selected = ($val == $currentTime) ? 'selected' : '';
-                                echo "<option value='$val' $selected>$label</option>";
-                            endforeach; ?>
-                        </select>
-                        <p id="time-hint" style="display:none; margin-top:6px; font-size:0.8125rem; color:var(--text-secondary);">
-                            Slots within 30 minutes of now are unavailable for today.
-                        </p>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Update Details (Optional):</label>
-                        <textarea name="details"
-                            rows="3"><?php echo htmlspecialchars(isset($_POST['details']) ? $_POST['details'] : $appointment['details']); ?></textarea>
-                    </div>
-
-                    <button type="submit" class="btn primary-btn mt-2 block-btn">Save Changes</button>
-                    <a href="appointments.php" class="btn secondary-btn mt-2 block-btn text-center">Cancel</a>
-                </form>
-            <?php endif; ?>
-        </div>
+                <button type="submit" class="btn primary-btn mt-2 block-btn">Save Changes</button>
+                <a href="appointments.php" class="btn secondary-btn mt-2 block-btn text-center" style="display:block; text-decoration:none;">Cancel</a>
+            </form>
+        <?php endif; ?>
     </div>
 
     <script>
@@ -248,7 +196,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             slots.forEach(slot => {
                 const [slotH, slotM] = slot.hhmm.split(':').map(Number);
                 
-                // Construct a date object for this slot today
                 const slotDate = new Date();
                 slotDate.setHours(slotH, slotM, 0, 0);
 
@@ -266,25 +213,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             timeHint.style.display = isToday ? 'block' : 'none';
 
-            // If previously selected slot is now disabled, leave it selected
-            // (server will catch it with a clear error message)
             if (prevVal) timeEl.value = prevVal;
         }
 
         dateEl.addEventListener('change', filterSlots);
-
-        // Run on load so that if today is pre-filled, slots filter immediately
         if (dateEl.value) filterSlots();
 
-        // Client-side guard before submit
         document.getElementById('editForm').addEventListener('submit', function (e) {
             const selectedDate = dateEl.value;
             const selectedTime = timeEl.value;
-
             if (!selectedDate || !selectedTime) return;
 
             const todayStr = new Date().toISOString().split('T')[0];
-
             if (selectedDate < todayStr) {
                 e.preventDefault();
                 alert('You cannot reschedule to a past date.');
@@ -307,7 +247,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         });
     })();
     </script>
-</body>
-
 </body>
 </html>

@@ -154,17 +154,18 @@ $result = $conn->query($sql);
                                             <a href="#"
                                                 onclick="exportSingleTicket('<?php echo htmlspecialchars($row['booking_id']); ?>', '<?php echo htmlspecialchars($row['patient_name']); ?>', '<?php echo htmlspecialchars($row['doctor_name'] ? $row['doctor_name'] : 'Unassigned'); ?>', '<?php echo htmlspecialchars($row['doctor_specialty'] ? $row['doctor_specialty'] : 'General Medicine'); ?>', '<?php echo date('F j, Y', strtotime($row['date'])); ?>', '<?php echo date('h:i A', strtotime($row['time'])); ?>', '<?php echo htmlspecialchars(ucfirst($pmtStatus)); ?>', '<?php echo number_format(CONSULTATION_FEE, 0); ?>', '<?php echo htmlspecialchars($row['cf_order_id'] ?? 'N/A'); ?>')">Download Receipt</a>
 
-                                            <?php 
-                                            $appt_timestamp = strtotime($row['date'] . ' ' . $row['time']);
-                                            $time_diff = $appt_timestamp - time();
-                                            if ($time_diff >= (6 * 3600)): 
-                                            ?>
-                                                <a href="edit_appointment.php?id=<?php echo $row['id']; ?>">Edit Details</a>
-                                                <a href="#" onclick="confirmCancellation(<?php echo $row['id']; ?>)"
-                                                    class="text-danger">Cancel Booking</a>
-                                            <?php elseif ($appt_timestamp > time()): ?>
-                                                <a href="#" class="text-muted" style="cursor:not-allowed;" title="Cannot cancel within 6 hours of appointment" onclick="alert('Appointments cannot be cancelled within 6 hours of the scheduled time.'); return false;">Cancel Booking</a>
-                                            <?php endif; ?>
+                                           <?php 
+                                                $appt_timestamp = strtotime($row['date'] . ' ' . $row['time']);
+                                                $time_diff = $appt_timestamp - time();
+                                                if ($time_diff >= (6 * 3600)): 
+                                                ?>
+                                                    <a href="edit_appointment.php?id=<?php echo $row['id']; ?>">Edit Details</a>
+                                                    <a href="#" onclick="confirmCancellation(<?php echo $row['id']; ?>)" class="text-danger">Cancel Booking</a>
+
+                                                <?php elseif ($appt_timestamp > time()): ?>
+                                                    <a href="#" class="text-muted" style="cursor:not-allowed;" onclick="alert('Appointments cannot be edited within 6 hours of the scheduled time.'); return false;">Edit Details</a>
+                                                    <a href="#" class="text-muted" style="cursor:not-allowed;" onclick="alert('Appointments cannot be cancelled within 6 hours of the scheduled time.'); return false;">Cancel Booking</a>
+                                                <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>
