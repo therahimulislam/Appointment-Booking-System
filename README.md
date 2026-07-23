@@ -99,6 +99,29 @@ To run this project locally, you will need:
 - **Never commit your `.env` file** to a public version control system. It contains sensitive keys and database credentials.
 - Ensure your `session.gc_maxlifetime` and cookie parameters are configured securely as defined in the application entry points.
 
+## 👨‍💻 Developers
+
+### Divyanshu Dubey
+
+**Role:** Full-Stack Developer
+**University:** Assam down town University
+**GitHub:** https://github.com/DivyanshuDubey10
+**LinkedIn:** https://www.linkedin.com/in/divyanshu-dubey-4662b1378/
+
+---
+
+### Rahimul Islam
+
+**Role:** Full-Stack Developer
+**University:** Assam down town University
+**GitHub:** https://github.com/therahimulislam
+**LinkedIn:** https://www.linkedin.com/in/therahimulislam/
+
+---
+
+Thank you for exploring **CarePlus**! If you have any questions, suggestions, or would like to collaborate, feel free to connect with either of us through GitHub or LinkedIn.
+
+
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome! Feel free to check the issues page if you want to contribute.
